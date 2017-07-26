@@ -13,11 +13,9 @@ class Attack {
       clientSocket: DatagramSocket, host: InetAddress, port: Int ->
 
       val action: Actions = Actions(clientSocket, host, port)
-      action.move("35 0")
+      action.move("0 0")
 
-      for (i in 0..499) {
-        Thread.sleep(200L)
-      }
+      Thread.sleep(100000L)
     }
   }
 
@@ -26,11 +24,9 @@ class Attack {
       clientSocket: DatagramSocket, host: InetAddress, port: Int ->
 
       val action: Actions = Actions(clientSocket, host, port)
-      action.move("40 -10")
+      action.move("-5 -5")
 
-      for (i in 0..499) {
-        Thread.sleep(200L)
-      }
+      Thread.sleep(100000L)
     }
   }
 
@@ -39,11 +35,9 @@ class Attack {
       clientSocket: DatagramSocket, host: InetAddress, port: Int ->
 
       val action: Actions = Actions(clientSocket, host, port)
-      action.move("40 10")
+      action.move("-5 5")
 
-      for (i in 0..499) {
-        Thread.sleep(200L)
-      }
+      Thread.sleep(100000L)
     }
   }
 }

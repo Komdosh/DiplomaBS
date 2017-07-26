@@ -17,7 +17,10 @@ fun initPayer(teamName: String, commands: (clientSocket: DatagramSocket, host: I
       host = initData.address
       port = initData.port
 
+      Thread.sleep(500L)
+
       commands(clientSocket, host, port)
+
     } catch (e: Exception) {
       println(e.message)
     } finally {
@@ -28,6 +31,10 @@ fun initPayer(teamName: String, commands: (clientSocket: DatagramSocket, host: I
 
 private fun init(clientSocket: DatagramSocket, teamName: String): DatagramPacket {
   return sendAndReceiveCommand(clientSocket, "init $teamName", "(version 15)", IPAddress, 6000)
+}
+
+fun initTrainer(clientSocket: DatagramSocket): DatagramPacket {
+  return sendAndReceiveCommand(clientSocket, "init", "(version 15)", IPAddress, 6001)
 }
 
 @Throws(Exception::class)
@@ -47,11 +54,12 @@ private fun receiveDataFromServer(clientSocket: DatagramSocket, command: String,
   val receiveData = ByteArray(1024)
   val receivePacket = DatagramPacket(receiveData, receiveData.size)
   clientSocket.receive(receivePacket)
+
   writeAnswerFromServer(receivePacket, command, params)
   return receivePacket
 }
 
 private fun writeAnswerFromServer(receivePacket: DatagramPacket, command: String, params: String) {
-  val modifiedSentence = String(receivePacket.data)
+  val modifiedSentence = String(receivePacket.data, 0, receivePacket.length - 1)
   println("FROM SERVER ($command $params):$modifiedSentence")
 }

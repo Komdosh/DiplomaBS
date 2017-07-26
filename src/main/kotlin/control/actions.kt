@@ -1,6 +1,5 @@
 package control
 
-import control.sendAndReceiveCommand
 import java.net.DatagramSocket
 import java.net.InetAddress
 
