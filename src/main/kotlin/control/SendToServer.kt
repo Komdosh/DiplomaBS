@@ -1,6 +1,6 @@
 package control
 
-import constants.IPAddress
+import constants.IP_ADDRESS
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -17,10 +17,7 @@ fun initPayer(teamName: String, commands: (clientSocket: DatagramSocket, host: I
       host = initData.address
       port = initData.port
 
-      Thread.sleep(500L)
-
       commands(clientSocket, host, port)
-
     } catch (e: Exception) {
       println(e.message)
     } finally {
@@ -30,11 +27,11 @@ fun initPayer(teamName: String, commands: (clientSocket: DatagramSocket, host: I
 }
 
 private fun init(clientSocket: DatagramSocket, teamName: String): DatagramPacket {
-  return sendAndReceiveCommand(clientSocket, "init $teamName", "(version 15)", IPAddress, 6000)
+  return sendAndReceiveCommand(clientSocket, "init $teamName", "(version 15)", IP_ADDRESS, 6000)
 }
 
 fun initTrainer(clientSocket: DatagramSocket): DatagramPacket {
-  return sendAndReceiveCommand(clientSocket, "init", "(version 15)", IPAddress, 6001)
+  return sendAndReceiveCommand(clientSocket, "init", "(version 15)", IP_ADDRESS, 6001)
 }
 
 @Throws(Exception::class)

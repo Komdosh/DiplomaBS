@@ -13,8 +13,9 @@ class Def {
       clientSocket: DatagramSocket, host: InetAddress, port: Int ->
 
       val action: Actions = Actions(clientSocket, host, port)
-      action.move("-5 -5")
+      action.move(-3, -8)
 
+      action.runAndReturn()
       Thread.sleep(100000L)
     }
   }
@@ -24,8 +25,9 @@ class Def {
       clientSocket: DatagramSocket, host: InetAddress, port: Int ->
 
       val action: Actions = Actions(clientSocket, host, port)
-      action.move("-5 5")
+      action.move(-3, 8)
 
+      action.runAndReturn()
       Thread.sleep(100000L)
     }
   }

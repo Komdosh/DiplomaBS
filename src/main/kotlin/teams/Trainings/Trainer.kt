@@ -21,6 +21,7 @@ class Trainer {
         Thread.sleep(500L)
 
         sendAndReceiveCommand(clientSocket, "change_mode", "kick_off_l", host, port)
+
         Thread.sleep(100000L)
       } catch (e: Exception) {
         println(e.message)

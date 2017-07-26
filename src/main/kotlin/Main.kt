@@ -1,3 +1,4 @@
+import constants.TICK
 import teams.Attack
 import teams.Def
 import teams.Trainings.Trainer
@@ -15,14 +16,22 @@ fun main(args: Array<String>) {
       "-e",
       "rcsoccersim").start()
 
-  Thread.sleep(2000)
+  Thread.sleep(1500)
 
-  val streamOfPlayers: Stream<Runnable> = Stream.of(attack.mainActor(), attack.upperAttacker(), attack.lowerAttacker(),
+  val attackers: Stream<Runnable> = Stream.of(
+      attack.mainActor(), attack.upperAttacker(), attack.lowerAttacker())
+
+  val defers: Stream<Runnable> = Stream.of(
       def.upperDef(), def.lowerDef())
 
-  streamOfPlayers.forEach({
+  attackers.forEach({
     Thread(it).start()
-    Thread.sleep(1500L)
+  })
+
+  Thread.sleep(TICK)
+
+  defers.forEach({
+    Thread(it).start()
   })
 
   Thread(trainer.init()).start()

@@ -2,4 +2,6 @@ package constants
 
 import java.net.InetAddress
 
-val IPAddress: InetAddress = InetAddress.getByName("localhost")
+val IP_ADDRESS: InetAddress = InetAddress.getByName("localhost")
+
+val TICK = 100L
