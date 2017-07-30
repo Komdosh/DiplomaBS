@@ -9,24 +9,40 @@ import java.net.InetAddress
 class Actions(val clientSocket: DatagramSocket, val host: InetAddress, val port: Int) {
 
   fun move(x: Int, y: Int) {
-    send("move", "$x $y")
+    sendWithTick("move", "$x $y")
   }
 
   fun kick(power: Int, direction: Int) {
-    send("kick", "$power $direction")
+    sendWithTick("kick", "$power $direction")
   }
 
   fun dash(power: Int) {
-    send("dash", "$power")
+    sendWithTick("dash", "$power")
   }
 
   fun turn(angle: Int) {
-    send("turn", "$angle")
+    sendWithTick("turn", "$angle")
+  }
+
+  fun turnNeck(angle: Int) {
+    send("turn_neck", "$angle")
+  }
+
+  fun changeView(width: String, quality: String) {
+    send("change_view", "$width $quality")
+  }
+
+  fun receive() {
+    receiveCommand(clientSocket, "No Command", "")
+  }
+
+  private fun sendWithTick(command: String, param: String) {
+    sendAndReceiveCommand(clientSocket, command, param, host, port)
+    Thread.sleep(TICK)
   }
 
   private fun send(command: String, param: String) {
     sendAndReceiveCommand(clientSocket, command, param, host, port)
-    Thread.sleep(TICK)
   }
 
   fun runAndReturn() {

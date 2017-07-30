@@ -34,20 +34,27 @@ fun initTrainer(clientSocket: DatagramSocket): DatagramPacket {
   return sendAndReceiveCommand(clientSocket, "init", "(version 15)", IP_ADDRESS, 6001)
 }
 
-@Throws(Exception::class)
 fun sendAndReceiveCommand(clientSocket: DatagramSocket, command: String, params: String,
                           host: InetAddress, port: Int): DatagramPacket {
   sendDataToServer(command, params, host, port, clientSocket)
   return receiveDataFromServer(clientSocket, command, params)
 }
 
+fun receiveCommand(clientSocket: DatagramSocket, command: String, params: String): DatagramPacket {
+  return receiveDataFromServer(clientSocket, command, params)
+}
+
 private fun sendDataToServer(command: String, params: String, IPAddress: InetAddress, port: Int, clientSocket: DatagramSocket) {
-  val sendData: ByteArray = "($command $params)".toByteArray()
+  val param: StringBuilder = StringBuilder("")
+  if (!params.isBlank()) {
+    param.append(" ").append(params)
+  }
+  val sendData: ByteArray = "($command$param)".toByteArray()
   val packetToSend = DatagramPacket(sendData, sendData.size, IPAddress, port)
   clientSocket.send(packetToSend)
 }
 
-private fun receiveDataFromServer(clientSocket: DatagramSocket, command: String, params: String): DatagramPacket {
+fun receiveDataFromServer(clientSocket: DatagramSocket, command: String, params: String): DatagramPacket {
   val receiveData = ByteArray(1024)
   val receivePacket = DatagramPacket(receiveData, receiveData.size)
   clientSocket.receive(receivePacket)
@@ -58,5 +65,11 @@ private fun receiveDataFromServer(clientSocket: DatagramSocket, command: String,
 
 private fun writeAnswerFromServer(receivePacket: DatagramPacket, command: String, params: String) {
   val modifiedSentence = String(receivePacket.data, 0, receivePacket.length - 1)
-  println("FROM SERVER ($command $params):$modifiedSentence")
+  val param: StringBuilder = StringBuilder("")
+  if (!params.isBlank()) {
+    param.append(" ").append(params)
+  }
+  if (!modifiedSentence.contains("warning", true) && !modifiedSentence.contains("error", true)) {
+    println("FROM SERVER ($command$param):$modifiedSentence")
+  }
 }
