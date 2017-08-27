@@ -22,7 +22,7 @@ class Attack {
 
       Thread.sleep(START_TIMEOUT)
       action.changeView("narrow", "low")
-      action.turnNeck(-45)
+      action.turnNeck(-32)
 
       val scheduler = Executors.newScheduledThreadPool(1)
       scheduler.scheduleAtFixedRate({ action.receive() }, 0, 10, TimeUnit.MILLISECONDS)

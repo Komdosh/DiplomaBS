@@ -1,6 +1,7 @@
 package message.parse.vision
 
 import model.VisiblePlayer
+import model.VisiblePlayerExtInfo
 import kotlin.streams.toList
 
 fun parseVisiblePlayers(message: String): List<VisiblePlayer> {
@@ -17,14 +18,28 @@ fun parseVisiblePlayers(message: String): List<VisiblePlayer> {
   }.toList().parallelStream().map {
     val teamName = getTeamName(teamNameRegex, it)
     val playerNumber = getPlayerNumber(playerNumberRegex, it)
-    val unknown = getUnknownParams(unknownRegex, it)
+    val detailedInfo = getUnknownParams(unknownRegex, it)
+    val distance = if (detailedInfo.size == 1 || detailedInfo.isEmpty()) null else detailedInfo[0]
+    val direction = if (detailedInfo.size == 1) detailedInfo[0] else if (detailedInfo.isNotEmpty()) detailedInfo[1] else null
 
-    VisiblePlayer(teamName, playerNumber, unknown, tick)
+    val visiblePlayerExtInfo: VisiblePlayerExtInfo? = if (detailedInfo.size > 2) getVisiblePlayerExtInfo(detailedInfo) else null
+
+    VisiblePlayer(teamName, playerNumber, direction, distance, visiblePlayerExtInfo, tick)
   }.toList()
 }
 
+private fun getVisiblePlayerExtInfo(detailedInfo: Array<Int?>): VisiblePlayerExtInfo? {
+  val distChange = detailedInfo[2]
+  val dirChange = detailedInfo[3]
+
+  val bodyFacingDir = detailedInfo[4]
+  val headFacingDir = detailedInfo[5]
+
+  return VisiblePlayerExtInfo(distChange, dirChange, bodyFacingDir, headFacingDir)
+}
+
 private fun getUnknownParams(unknownRegex: Regex, it: String) =
-    unknownRegex.find(it)!!.groupValues[0].removeSurrounding(")").trim().split(" ").map { it.toInt() }.toTypedArray()
+    unknownRegex.find(it)!!.groupValues[0].removeSurrounding(")").trim().split(" ").map { it.toIntOrNull() }.toTypedArray()
 
 private fun getPlayerNumber(playerNumberRegex: Regex, it: String) =
     playerNumberRegex.find(it)!!.groupValues[0].removeSuffix(")").toInt()
