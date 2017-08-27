@@ -1,6 +1,7 @@
 package control
 
 import constants.IP_ADDRESS
+import constants.MAIN_ACTOR
 import message.parse.vision.parseVisiblePlayers
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -72,7 +73,8 @@ private fun printlnAnswerFromServer(receivePacket: DatagramPacket, command: Stri
   }
   if (!modifiedSentence.contains("warning", true) && !modifiedSentence.contains("error", true)) {
     //println("FROM SERVER ($command$param):$modifiedSentence")
-    if (modifiedSentence.contains("(p \"", true)) {
+
+    if (modifiedSentence.contains("(p \"", true) && Thread.currentThread().name == MAIN_ACTOR) {
       println(parseVisiblePlayers(modifiedSentence))
     }
   }

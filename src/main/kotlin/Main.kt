@@ -1,3 +1,4 @@
+import constants.MAIN_ACTOR
 import constants.TICK
 import teams.Attack
 import teams.Def
@@ -21,10 +22,13 @@ private fun runGame() {
 
   Thread.sleep(1500)
 
-  val attackers: Stream<Runnable> = Stream.of(
-      attack.mainActor(), attack.upperAttacker(), attack.lowerAttacker())
+  val attackers: Stream<Runnable> = Stream.of(attack.upperAttacker(), attack.lowerAttacker())
 
   val defers: Stream<Runnable> = Stream.of(def.upperDef(), def.lowerDef())
+
+  val mainActor = Thread(attack.mainActor())
+  mainActor.name = MAIN_ACTOR
+  mainActor.start()
 
   attackers.forEach({
     Thread(it).start()
