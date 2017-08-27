@@ -6,9 +6,12 @@ import java.util.stream.Stream
 
 
 fun main(args: Array<String>) {
+  runGame()
+}
 
-  val def : Def = Def()
-  val attack : Attack = Attack()
+private fun runGame() {
+  val def: Def = Def()
+  val attack: Attack = Attack()
   val trainer: Trainer = Trainer()
 
   val p = ProcessBuilder(
@@ -21,8 +24,7 @@ fun main(args: Array<String>) {
   val attackers: Stream<Runnable> = Stream.of(
       attack.mainActor(), attack.upperAttacker(), attack.lowerAttacker())
 
-  val defers: Stream<Runnable> = Stream.of(
-      def.upperDef(), def.lowerDef())
+  val defers: Stream<Runnable> = Stream.of(def.upperDef(), def.lowerDef())
 
   attackers.forEach({
     Thread(it).start()
@@ -35,7 +37,4 @@ fun main(args: Array<String>) {
   })
 
   Thread(trainer.init()).start()
-
-  Thread.sleep(50000)
-  p.destroy()
 }
