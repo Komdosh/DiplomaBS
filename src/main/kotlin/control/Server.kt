@@ -3,6 +3,7 @@ package control
 import constants.KICKER
 import constants.server.IP_ADDRESS
 import message.parse.vision.parseVisiblePlayers
+import visiblePlayersCount
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -75,7 +76,7 @@ private fun printlnAnswerFromServer(receivePacket: DatagramPacket, command: Stri
     //println("FROM SERVER ($command$param):$modifiedSentence")
 
     if (modifiedSentence.contains("(p \"", true) && Thread.currentThread().name == KICKER) {
-      println(parseVisiblePlayers(modifiedSentence))
+      visiblePlayersCount += parseVisiblePlayers(modifiedSentence).size
     }
   }
 }

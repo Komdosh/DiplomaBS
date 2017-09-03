@@ -21,14 +21,14 @@ open class AttackActors(private val teamName: String, private val configs: HashM
       Thread.sleep(START_TIMEOUT)
 
       action.changeView(config.viewWidth, config.viewQuality)
-      action.turnNeck(config.turnNeck)
+      action.turnNeck(config.initialTurnNeck)
 
       val scheduler = Executors.newScheduledThreadPool(1)
       scheduler.scheduleAtFixedRate({ action.receive() }, 0, 10, TimeUnit.MILLISECONDS)
 
       action.kick(config.kickPower, config.kickDirection)
       for (i in 0..TICK_MAX - 3) {
-        action.turnNeck(if (i % 2 == 0) 80 else -80)
+        action.turnNeck(if (i % 2 == 0) config.turnNeck else -config.initialTurnNeck)
         action.dash(config.dashPower)
       }
       config.kickDirection = 50
