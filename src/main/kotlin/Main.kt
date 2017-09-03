@@ -1,17 +1,17 @@
-import constants.MAIN_ACTOR
-import constants.SERVER_START_TIMEOUT
-import constants.SERVER_STOP_TIMEOUT
-import teams.Attack
-import teams.Def
+import constants.server.SERVER_START_TIMEOUT
+import constants.server.SERVER_STOP_TIMEOUT
+import constants.server.TICK
+import teams.Actors
 import teams.Trainings.Trainer
+import teams.attack.Attack
+import teams.def.Def
 import java.lang.System.exit
-import java.util.stream.Stream
 
 
 fun main(args: Array<String>) {
-  val def: Def = Def()
-  val attack: Attack = Attack()
-  val trainer: Trainer = Trainer()
+  val def: Actors = Def()
+  val attack: Actors = Attack()
+  val trainer = Trainer()
 
   for (i in 0..3) {
     runServer(Runnable { runActors(attack, def, trainer) })
@@ -38,22 +38,12 @@ private fun runServer(runOnServer: Runnable) {
       "killall rcsoccersim").start()
 }
 
-private fun runActors(attack: Attack, def: Def, trainer: Trainer) {
-  val attackers: Stream<Runnable> = Stream.of(attack.upperAttacker(), attack.lowerAttacker())
+private fun runActors(attack: Actors, def: Actors, trainer: Trainer) {
+  attack.getActorThreads().forEach({ it.start() })
 
-  val defers: Stream<Runnable> = Stream.of(def.upperDef(), def.lowerDef())
+  Thread.sleep(TICK)
 
-  val mainActor = Thread(attack.mainActor())
-  mainActor.name = MAIN_ACTOR
-  mainActor.start()
-
-  attackers.forEach({
-    Thread(it).start()
-  })
-
-  defers.forEach({
-    Thread(it).start()
-  })
+  def.getActorThreads().forEach({ it.start() })
 
   Thread(trainer.init()).start()
 }

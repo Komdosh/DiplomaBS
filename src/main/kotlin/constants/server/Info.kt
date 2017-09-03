@@ -1,4 +1,4 @@
-package constants
+package constants.server
 
 import java.net.InetAddress
 

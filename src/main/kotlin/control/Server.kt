@@ -1,7 +1,7 @@
 package control
 
-import constants.IP_ADDRESS
-import constants.MAIN_ACTOR
+import constants.KICKER
+import constants.server.IP_ADDRESS
 import message.parse.vision.parseVisiblePlayers
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -47,7 +47,7 @@ fun receiveCommand(clientSocket: DatagramSocket, command: String, params: String
 }
 
 private fun sendDataToServer(command: String, params: String, IPAddress: InetAddress, port: Int, clientSocket: DatagramSocket) {
-  val param: StringBuilder = StringBuilder("")
+  val param = StringBuilder("")
   if (!params.isBlank()) {
     param.append(" ").append(params)
   }
@@ -66,15 +66,15 @@ fun receiveDataFromServer(clientSocket: DatagramSocket, command: String, params:
 }
 
 private fun printlnAnswerFromServer(receivePacket: DatagramPacket, command: String, params: String) {
-  val modifiedSentence: String = String(receivePacket.data, 0, receivePacket.length - 1)
-  val param: StringBuilder = StringBuilder("")
+  val modifiedSentence = String(receivePacket.data, 0, receivePacket.length - 1)
+  val param = StringBuilder("")
   if (!params.isBlank()) {
     param.append(" ").append(params)
   }
   if (!modifiedSentence.contains("warning", true) && !modifiedSentence.contains("error", true)) {
     //println("FROM SERVER ($command$param):$modifiedSentence")
 
-    if (modifiedSentence.contains("(p \"", true) && Thread.currentThread().name == MAIN_ACTOR) {
+    if (modifiedSentence.contains("(p \"", true) && Thread.currentThread().name == KICKER) {
       println(parseVisiblePlayers(modifiedSentence))
     }
   }

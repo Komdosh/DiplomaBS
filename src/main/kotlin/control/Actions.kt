@@ -1,12 +1,12 @@
 package control
 
 import constants.START_TIMEOUT
-import constants.TICK
 import constants.TICK_MAX
+import constants.server.TICK
 import java.net.DatagramSocket
 import java.net.InetAddress
 
-class Actions(val clientSocket: DatagramSocket, val host: InetAddress, val port: Int) {
+class Actions(private val clientSocket: DatagramSocket, private val host: InetAddress, private val port: Int) {
 
   fun move(x: Int, y: Int) {
     sendWithTick("move", "$x $y")
