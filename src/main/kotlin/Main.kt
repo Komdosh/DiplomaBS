@@ -1,27 +1,44 @@
 import constants.MAIN_ACTOR
-import constants.TICK
+import constants.SERVER_START_TIMEOUT
+import constants.SERVER_STOP_TIMEOUT
 import teams.Attack
 import teams.Def
 import teams.Trainings.Trainer
+import java.lang.System.exit
 import java.util.stream.Stream
 
 
 fun main(args: Array<String>) {
-  runGame()
-}
-
-private fun runGame() {
   val def: Def = Def()
   val attack: Attack = Attack()
   val trainer: Trainer = Trainer()
 
-  val p = ProcessBuilder(
+  for (i in 0..3) {
+    runServer(Runnable { runActors(attack, def, trainer) })
+  }
+
+  exit(0)
+}
+
+private fun runServer(runOnServer: Runnable) {
+  ProcessBuilder(
       "gnome-terminal",
       "-e",
       "rcsoccersim").start()
 
-  Thread.sleep(1500)
+  Thread.sleep(SERVER_START_TIMEOUT)
 
+  runOnServer.run()
+
+  Thread.sleep(SERVER_STOP_TIMEOUT)
+
+  ProcessBuilder(
+      "gnome-terminal",
+      "-e",
+      "killall rcsoccersim").start()
+}
+
+private fun runActors(attack: Attack, def: Def, trainer: Trainer) {
   val attackers: Stream<Runnable> = Stream.of(attack.upperAttacker(), attack.lowerAttacker())
 
   val defers: Stream<Runnable> = Stream.of(def.upperDef(), def.lowerDef())
@@ -33,8 +50,6 @@ private fun runGame() {
   attackers.forEach({
     Thread(it).start()
   })
-
-  Thread.sleep(TICK)
 
   defers.forEach({
     Thread(it).start()
