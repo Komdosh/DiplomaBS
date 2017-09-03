@@ -2,6 +2,7 @@ import constants.KICKER
 import constants.server.SERVER_START_TIMEOUT
 import constants.server.SERVER_STOP_TIMEOUT
 import constants.server.TICK
+import model.VisiblePlayer
 import teams.Actors
 import teams.Trainings.Trainer
 import teams.attack.Attack
@@ -9,6 +10,7 @@ import teams.def.Def
 import java.lang.System.exit
 
 var visiblePlayersCount = 0
+val visiblePlayers: MutableList<VisiblePlayer> = ArrayList()
 
 fun main(args: Array<String>) {
   val def = Def()
@@ -17,13 +19,20 @@ fun main(args: Array<String>) {
 
   for (i in 0..60) {
     runServer(Runnable { runActors(attack, def, trainer) })
+
     val turnMoment = attack.configs[KICKER]!!.turnNeck
-    println("$turnMoment : $visiblePlayersCount")
-    attack.configs[KICKER]!!.turnNeck = turnMoment - 10
+    val kickDirection = attack.configs[KICKER]!!.kickDirection
+    println("turn moment: $turnMoment | kick direction: $kickDirection | seeing players: $visiblePlayersCount")
+
     visiblePlayersCount = 0
+    visiblePlayers.clear()
+
     if (turnMoment - 10 == 10) {
       attack.configs[KICKER]!!.turnNeck = 90
+    } else {
+      attack.configs[KICKER]!!.turnNeck = turnMoment - 10
     }
+    println("-----------------------------------------")
   }
 
   exit(0)

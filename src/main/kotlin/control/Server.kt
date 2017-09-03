@@ -3,6 +3,8 @@ package control
 import constants.KICKER
 import constants.server.IP_ADDRESS
 import message.parse.vision.parseVisiblePlayers
+import model.VisiblePlayer
+import visiblePlayers
 import visiblePlayersCount
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -76,7 +78,10 @@ private fun printlnAnswerFromServer(receivePacket: DatagramPacket, command: Stri
     //println("FROM SERVER ($command$param):$modifiedSentence")
 
     if (modifiedSentence.contains("(p \"", true) && Thread.currentThread().name == KICKER) {
-      visiblePlayersCount += parseVisiblePlayers(modifiedSentence).size
+      val vp: List<VisiblePlayer> = parseVisiblePlayers(modifiedSentence)
+      visiblePlayers.addAll(vp)
+      visiblePlayersCount += vp.size
+      //println(vp)
     }
   }
 }

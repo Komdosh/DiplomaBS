@@ -6,6 +6,7 @@ import control.Actions
 import control.initPayer
 import teams.Actors
 import teams.PlayerConfig
+import visiblePlayers
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.util.concurrent.Executors
@@ -31,7 +32,9 @@ open class AttackActors(private val teamName: String, private val configs: HashM
         action.turnNeck(if (i % 2 == 0) config.turnNeck else -config.initialTurnNeck)
         action.dash(config.dashPower)
       }
-      config.kickDirection = 50
+      val catcher = visiblePlayers.findLast { it.teamName == teamName }
+      //println("catcher: $catcher")
+      config.kickDirection = catcher?.direction ?: config.kickDirection
       action.kick(config.kickPower, config.kickDirection)
 
       scheduler.shutdown()
