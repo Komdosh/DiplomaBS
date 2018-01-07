@@ -1,8 +1,8 @@
-package teams
+package diploma.teams
 
-import constants.server.SERVER_STOP_TIMEOUT
-import control.Actions
-import control.initPayer
+import diploma.constants.server.SERVER_STOP_TIMEOUT
+import diploma.control.Actions
+import diploma.control.initPayer
 import java.net.DatagramSocket
 import java.net.InetAddress
 

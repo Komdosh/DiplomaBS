@@ -1,4 +1,4 @@
-package constants.server
+package diploma.constants.server
 
 import java.net.InetAddress
 

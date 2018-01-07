@@ -1,12 +1,14 @@
-import constants.KICKER
-import constants.server.SERVER_START_TIMEOUT
-import constants.server.SERVER_STOP_TIMEOUT
-import constants.server.TICK
-import model.VisiblePlayer
-import teams.Actors
+package diploma
+
+import diploma.constants.KICKER
+import diploma.constants.server.SERVER_START_TIMEOUT
+import diploma.constants.server.SERVER_STOP_TIMEOUT
+import diploma.constants.server.TICK
+import diploma.model.VisiblePlayer
+import diploma.teams.Actors
+import diploma.teams.attack.Attack
+import diploma.teams.def.Def
 import teams.Trainings.Trainer
-import teams.attack.Attack
-import teams.def.Def
 import java.lang.System.exit
 
 var visiblePlayersCount = 0
@@ -22,7 +24,7 @@ fun main(args: Array<String>) {
 
     val turnMoment = attack.configs[KICKER]!!.turnNeck
     val kickDirection = attack.configs[KICKER]!!.kickDirection
-    println("turn moment: $turnMoment | kick direction: $kickDirection | seeing players: $visiblePlayersCount")
+    println("turn moment: $turnMoment | kick direction: $kickDirection | seeing players: ${visiblePlayersCount}")
 
     visiblePlayersCount = 0
     visiblePlayers.clear()

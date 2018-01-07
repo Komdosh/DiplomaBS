@@ -1,16 +1,16 @@
-package control
+package diploma.control
 
-import constants.KICKER
-import constants.server.IP_ADDRESS
-import message.parse.vision.parseVisiblePlayers
-import model.VisiblePlayer
-import visiblePlayers
-import visiblePlayersCount
+import diploma.constants.KICKER
+import diploma.constants.server.IP_ADDRESS
+import diploma.model.VisiblePlayer
+import diploma.visiblePlayers
+import diploma.visiblePlayersCount
+import diploma.vision.parseVisiblePlayers
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 
-fun initPayer(teamName: String, commands: (clientSocket: DatagramSocket, host: InetAddress, port: Int) -> Unit): Runnable{
+fun initPayer(teamName: String, commands: (clientSocket: DatagramSocket, host: InetAddress, port: Int) -> Unit): Runnable {
   return Runnable {
     val port: Int
     val host: InetAddress

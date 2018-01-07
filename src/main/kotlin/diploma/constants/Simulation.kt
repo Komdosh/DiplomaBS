@@ -1,4 +1,4 @@
-package constants
+package diploma.constants
 
 val START_TIMEOUT = 1000L
 

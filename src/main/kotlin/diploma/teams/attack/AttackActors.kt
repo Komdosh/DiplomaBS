@@ -1,12 +1,12 @@
-package teams.attack
+package diploma.teams.attack
 
-import constants.*
-import constants.server.SERVER_STOP_TIMEOUT
-import control.Actions
-import control.initPayer
-import teams.Actors
-import teams.PlayerConfig
-import visiblePlayers
+import diploma.constants.*
+import diploma.constants.server.SERVER_STOP_TIMEOUT
+import diploma.control.Actions
+import diploma.control.initPayer
+import diploma.teams.Actors
+import diploma.teams.PlayerConfig
+import diploma.visiblePlayers
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.util.concurrent.Executors

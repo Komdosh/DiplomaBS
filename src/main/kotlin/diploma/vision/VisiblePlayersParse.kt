@@ -1,7 +1,7 @@
-package message.parse.vision
+package diploma.vision
 
-import model.VisiblePlayer
-import model.VisiblePlayerExtInfo
+import diploma.model.VisiblePlayer
+import diploma.model.VisiblePlayerExtInfo
 import kotlin.streams.toList
 
 fun parseVisiblePlayers(message: String): List<VisiblePlayer> {

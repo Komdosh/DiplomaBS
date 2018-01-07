@@ -1,9 +1,9 @@
-package teams.attack
+package diploma.teams.attack
 
-import constants.KICKER
-import constants.LOW_ATTACKER
-import constants.UP_ATTACKER
-import teams.PlayerConfig
+import diploma.constants.KICKER
+import diploma.constants.LOW_ATTACKER
+import diploma.constants.UP_ATTACKER
+import diploma.teams.PlayerConfig
 
 class Attack(teamName: String = "Attack",
              val configs: HashMap<String, PlayerConfig>

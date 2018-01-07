@@ -1,8 +1,8 @@
-package control
+package diploma.control
 
-import constants.START_TIMEOUT
-import constants.TICK_MAX
-import constants.server.TICK
+import diploma.constants.START_TIMEOUT
+import diploma.constants.TICK_MAX
+import diploma.constants.server.TICK
 import java.net.DatagramSocket
 import java.net.InetAddress
 

@@ -1,9 +1,9 @@
-package teams.def
+package diploma.teams.def
 
-import constants.LOW_DEFER
-import constants.UP_DEFER
-import teams.Actors
-import teams.PlayerConfig
+import diploma.constants.LOW_DEFER
+import diploma.constants.UP_DEFER
+import diploma.teams.Actors
+import diploma.teams.PlayerConfig
 
 open class DefActors(private val teamName: String, private val configs: HashMap<String, PlayerConfig>) : Actors() {
 

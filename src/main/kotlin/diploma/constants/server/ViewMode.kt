@@ -1,4 +1,4 @@
-package constants.server
+package diploma.constants.server
 
 val WIDTH_NARROW: String = "narrow"
 val WIDTH_NORMAL: String = "normal"

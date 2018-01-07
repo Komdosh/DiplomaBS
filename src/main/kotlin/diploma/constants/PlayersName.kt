@@ -1,4 +1,4 @@
-package constants
+package diploma.constants
 
 val KICKER = "mainAttacker"
 val LOW_ATTACKER = "lowAttacker"

@@ -1,8 +1,8 @@
-package teams.def
+package diploma.teams.def
 
-import constants.LOW_DEFER
-import constants.UP_DEFER
-import teams.PlayerConfig
+import diploma.constants.LOW_DEFER
+import diploma.constants.UP_DEFER
+import diploma.teams.PlayerConfig
 
 class Def(teamName: String = "Def",
           configs: HashMap<String, PlayerConfig>
