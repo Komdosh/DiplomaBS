@@ -4,7 +4,7 @@ import java.net.InetAddress
 
 val IP_ADDRESS: InetAddress = InetAddress.getByName("localhost")
 
-const val TICK = 100L
+const val TICK = 100
 
 const val NOT_SET = -99999
 

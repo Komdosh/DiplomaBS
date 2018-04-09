@@ -17,6 +17,7 @@ const val simulationRepeat: Int = 1
 
 
 fun main(args: Array<String>) {
+
   val def = Def()
   val attack = Attack()
   val trainer = Trainer()
@@ -59,13 +60,13 @@ private fun runServer(runOnServer: Runnable) {
       "-e",
       "killall rcsoccersim").start()
 
-  Thread.sleep(TICK)
+  Thread.sleep(TICK.toLong())
 }
 
 private fun runActors(attack: Actors, def: Actors, trainer: Trainer) {
   attack.getActorThreads().forEach({ it.start() })
 
-  Thread.sleep(TICK)
+  Thread.sleep(TICK.toLong())
 
   def.getActorThreads().forEach({ it.start() })
 

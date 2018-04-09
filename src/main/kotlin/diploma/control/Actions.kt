@@ -40,7 +40,7 @@ class Actions(private val clientSocket: DatagramSocket, private val host: InetAd
 
   private fun sendWithTick(command: String, param: String) {
     sendAndReceiveCommand(clientSocket, command, param, host, port)
-    Thread.sleep(TICK)
+    Thread.sleep(TICK.toLong())
   }
 
   private fun send(command: String, param: String) {
