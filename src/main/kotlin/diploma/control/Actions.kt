@@ -31,8 +31,6 @@ class Actions(private val clientSocket: DatagramSocket, private val host: InetAd
   }
 
   fun changeView(width: ViewWidth, quality: ViewQuality) {
-    println("$width")
-    println("$quality")
     send("change_view", "$width $quality")
   }
 

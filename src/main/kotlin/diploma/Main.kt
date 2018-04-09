@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
 
     val turnMoment = attack.configs[KICKER]!!.turnNeck
     val kickDirection = attack.configs[KICKER]!!.kickDirection
-    println("turn moment: $turnMoment | kick direction: $kickDirection | seeing players: ${visiblePlayersCount}")
+    println("turn moment: $turnMoment | kick direction: $kickDirection | seeing players: $visiblePlayersCount")
 
     visiblePlayersCount = 0
     visiblePlayers.clear()

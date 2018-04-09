@@ -28,6 +28,7 @@ open class AttackActors(private val teamName: String, private val configs: HashM
       scheduler.scheduleAtFixedRate({ action.receive() }, 0, 10, TimeUnit.MILLISECONDS)
 
       action.kick(config.kickPower, config.kickDirection)
+      var j = 0
       for (i in 0..TICK_MAX - 3) {
         action.turnNeck(if (i % 2 == 0) config.turnNeck else -config.initialTurnNeck)
         action.dash(config.dashPower)
