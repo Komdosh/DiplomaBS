@@ -1,6 +1,6 @@
 package diploma.constants.server
 
-enum class ViewQuality(quality: String) {
+enum class ViewQuality(private val quality: String) {
   LOW("low"), HIGH("low");
 
   fun getFactor(): Double {
@@ -9,4 +9,6 @@ enum class ViewQuality(quality: String) {
       HIGH -> 1.0
     }
   }
+
+  override fun toString(): String = quality
 }

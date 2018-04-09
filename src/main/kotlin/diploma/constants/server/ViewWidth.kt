@@ -10,4 +10,6 @@ enum class ViewWidth(private val width: String) {
       WIDE -> 2.0
     }
   }
+
+  override fun toString(): String = width
 }
