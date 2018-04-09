@@ -1,7 +1,8 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### Gradle template
 .gradle
-/build/
+/gradle/
+/build/*
 
 
 # Ignore Gradle GUI config
@@ -26,4 +27,5 @@ gen
 
 
 # rcssserver logs
-2017*
+*.rcg
+*.rcl
