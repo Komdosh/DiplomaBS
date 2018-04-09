@@ -3,6 +3,8 @@ package diploma.control
 import diploma.constants.START_TIMEOUT
 import diploma.constants.TICK_MAX
 import diploma.constants.server.TICK
+import diploma.constants.server.ViewQuality
+import diploma.constants.server.ViewWidth
 import java.net.DatagramSocket
 import java.net.InetAddress
 
@@ -28,7 +30,7 @@ class Actions(private val clientSocket: DatagramSocket, private val host: InetAd
     send("turn_neck", "$angle")
   }
 
-  fun changeView(width: String, quality: String) {
+  fun changeView(width: ViewWidth, quality: ViewQuality) {
     send("change_view", "$width $quality")
   }
 

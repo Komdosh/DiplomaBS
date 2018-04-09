@@ -13,13 +13,15 @@ import java.lang.System.exit
 
 var visiblePlayersCount = 0
 val visiblePlayers: MutableList<VisiblePlayer> = ArrayList()
+const val simulationRepeat: Int = 1
+
 
 fun main(args: Array<String>) {
   val def = Def()
   val attack = Attack()
   val trainer = Trainer()
 
-  for (i in 0..60) {
+  for (i in 0..simulationRepeat) {
     runServer(Runnable { runActors(attack, def, trainer) })
 
     val turnMoment = attack.configs[KICKER]!!.turnNeck

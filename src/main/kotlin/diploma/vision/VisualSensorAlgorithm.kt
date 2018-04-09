@@ -2,6 +2,17 @@ package diploma.vision
 
 class VisualSensorAlgorithm {
 
+  private val tickUntilAction: Int = 0
+  private val sensorTickUntilAction: Int = 0
+  private val maxVisibleAngle: Int = 0
+  private val sensorTickWithoutMainObject: Int = 0
+  private val estimateSensorTickWithoutMainObject: Int = 0
+  private val visualTickForEstimate: Int = 0
+  private val estimateUsefulnessAngles: Int = 0
+
+  constructor() {
+
+  }
 
   fun countTickUntilAction(): Int {
     return 0
