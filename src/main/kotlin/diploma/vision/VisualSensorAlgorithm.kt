@@ -8,10 +8,12 @@ import java.lang.Math.floor
 
 class VisualSensorAlgorithm {
 
-  private var tickUntilAction: Int = 3 //hardcoded for now
-  private var sensorTickUntilAction: Double = 0.0
+  private val boundAngel: Double = 90.0
+
+  private var tickUntilAction: Int = 8 //hardcoded for now
   private var maxVisibleAngle: Double = 0.0
   private var sensorTickWithoutMainObject: Int = 0
+  private var sensorTicksForGettingMinimalQualityInfo: Int = 0
   private var estimateSensorTickWithoutMainObject: Int = 0
   private var visualTickForEstimate: Int = 0
   private var estimateUsefulnessAngles: Int = 0
@@ -22,31 +24,55 @@ class VisualSensorAlgorithm {
     return tickUntilAction
   }
 
-  fun countSensorTickUntilAction(viewWidth: ViewWidth, viewQuality: ViewQuality): Double {
-    sensorTickUntilAction = tickUntilAction * TICK / getViewFrequency(viewWidth, viewQuality)
-    return sensorTickUntilAction
+  fun serverTicked(): Int = --tickUntilAction
+
+  fun countSensorTickUntilAction(viewWidth: ViewWidth, viewQuality: ViewQuality): Int =
+      floor(tickUntilAction * TICK / getViewFrequency(viewWidth, viewQuality)).toInt()
+
+  fun calculateSensorTicksForGetMinimalQualityInfo(): Int {
+    sensorTicksForGettingMinimalQualityInfo = ceil(maxVisibleAngle / getViewAngle(ViewWidth.WIDE) *
+        getViewFrequency(ViewWidth.WIDE, ViewQuality.LOW) / TICK).toInt()
+    return sensorTicksForGettingMinimalQualityInfo
   }
 
   fun calculateMaxVisibleAngle(viewWidth: ViewWidth, viewQuality: ViewQuality): Double {
-    val boundAngle = 120
     val viewAngel = getViewAngle(viewWidth)
-    val sightsForMaxAngle = ceil((boundAngle * 2) / viewAngel)
+    val sightsCountForMaxAngle = getSightsCountForAngel(boundAngel, viewAngel)
     val sensorFrequency = getViewFrequency(viewWidth, viewQuality) / TICK
-    val ticksForSeeMaxAngel = sightsForMaxAngle * sensorFrequency
+    val ticksForSeeMaxAngel = sightsCountForMaxAngle * sensorFrequency
+    val sensorTickUntilAction = countSensorTickUntilAction(viewWidth, viewQuality)
     maxVisibleAngle = if (ticksForSeeMaxAngel > sensorTickUntilAction) {
       floor(sensorTickUntilAction / sensorFrequency) * viewAngel
     } else {
-      boundAngle * 2.0
+      boundAngel * 2.0
     }
     return maxVisibleAngle
   }
 
-  fun countSensorTickWithoutMainObject(): Int {
-    return 0
+  fun calculateSensorTickWithoutMainObject(viewWidth: ViewWidth, viewQuality: ViewQuality): Int {
+    val viewAngel = getViewAngle(viewWidth)
+    sensorTickWithoutMainObject = 0
+    if (viewAngel < maxVisibleAngle) {
+      val angelWithoutMainObject = ceil((maxVisibleAngle - viewAngel) / viewAngel)
+      val sensorFrequency = getViewFrequency(viewWidth, viewQuality) / TICK
+      sensorTickWithoutMainObject = (sensorFrequency * angelWithoutMainObject).toInt()
+      val sensorTickUntilAction = countSensorTickUntilAction(viewWidth, viewQuality)
+      if (sensorTickWithoutMainObject > sensorTickUntilAction) {
+        sensorTickWithoutMainObject = sensorTickUntilAction
+      }
+    }
+    return sensorTickWithoutMainObject
   }
 
-  fun estimateSensorTickWithoutMainObject(): Int {
-    return 0
+  private fun getSightsCountForAngel(maxAngel: Double, viewAngel: Double) = ceil((maxAngel * 2) / viewAngel)
+
+  fun estimateSensorTickWithoutMainObject(viewWidth: ViewWidth): Int {
+    estimateSensorTickWithoutMainObject = 0
+    if (sensorTickWithoutMainObject > 0) {
+      val viewAngel = getViewAngle(viewWidth)
+      estimateSensorTickWithoutMainObject = floor(maxVisibleAngle / viewAngel / 2).toInt() //2 is a magic coefficient for now
+    }
+    return estimateSensorTickWithoutMainObject
   }
 
   fun getLowQualityVisualInfo() {
