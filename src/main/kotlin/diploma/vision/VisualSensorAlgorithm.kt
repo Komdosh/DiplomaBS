@@ -3,35 +3,56 @@ package diploma.vision
 import diploma.constants.server.TICK
 import diploma.constants.server.ViewQuality
 import diploma.constants.server.ViewWidth
+import diploma.control.Action
+import diploma.model.VisiblePlayer
 import java.lang.Math.ceil
 import java.lang.Math.floor
+import java.net.DatagramPacket
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
-class VisualSensorAlgorithm {
+class VisualSensorAlgorithm(private val actorControl: Action) {
 
   private val boundAngel: Double = 90.0
 
-  private var tickUntilAction: Int = 8 //hardcoded for now
+  private var tickUntilAction: AtomicInteger = AtomicInteger(8) //hardcoded for now
   private var maxVisibleAngle: Double = 0.0
   private var sensorTickWithoutMainObject: Int = 0
   private var sensorTicksForGettingMinimalQualityInfo: Int = 0
   private var estimateSensorTickWithoutMainObject: Int = 0
   private var visualTickForEstimate: Int = 0
   private var estimateUsefulnessAngles: Int = 0
+  private val usefulAngels: MutableMap<Int, List<VisiblePlayer>> = HashMap()
 
-  constructor() {}
+  fun start() {
+    val scheduler = Executors.newScheduledThreadPool(1)
+    scheduler.scheduleAtFixedRate({
+      if (serverTicked() == 0) {
+        scheduler.shutdown()
+      }
+    }, 0, TICK.toLong(), TimeUnit.MILLISECONDS)
 
-  fun countTickUntilAction(): Int {
-    return tickUntilAction
+    countSensorTickUntilAction(ViewWidth.NARROW, ViewQuality.LOW)
+    calculateMaxVisibleAngle(ViewWidth.NARROW, ViewQuality.LOW)
+    calculateSensorTicksForGetMinimalQualityInfo()
+    calculateSensorTickWithoutMainObject(ViewWidth.NARROW, ViewQuality.LOW)
+    estimateSensorTickWithoutMainObject(ViewWidth.NARROW)
+    getLowQualityVisualInfo()
   }
 
-  fun serverTicked(): Int = --tickUntilAction
+  fun getTicksUntilAction(): Int {
+    return tickUntilAction.get()
+  }
+
+  fun serverTicked(): Int = tickUntilAction.decrementAndGet()
 
   fun countSensorTickUntilAction(viewWidth: ViewWidth, viewQuality: ViewQuality): Int =
-      floor(tickUntilAction * TICK / getViewFrequency(viewWidth, viewQuality)).toInt()
+      floor(getTicksUntilAction() * TICK / getViewFrequency(viewWidth, viewQuality)).toInt()
 
   fun calculateSensorTicksForGetMinimalQualityInfo(): Int {
-    sensorTicksForGettingMinimalQualityInfo = ceil(maxVisibleAngle / getViewAngle(ViewWidth.WIDE) *
-        getViewFrequency(ViewWidth.WIDE, ViewQuality.LOW) / TICK).toInt()
+    sensorTicksForGettingMinimalQualityInfo = ceil(maxVisibleAngle / getViewAngle(ViewWidth.NARROW) *
+        getViewFrequency(ViewWidth.NARROW, ViewQuality.LOW) / TICK).toInt()
     return sensorTicksForGettingMinimalQualityInfo
   }
 
@@ -75,8 +96,46 @@ class VisualSensorAlgorithm {
     return estimateSensorTickWithoutMainObject
   }
 
-  fun getLowQualityVisualInfo() {
+  fun getLowQualityVisualInfo(viewWidth: ViewWidth = ViewWidth.NARROW, viewQuality: ViewQuality = ViewQuality.LOW) {
+    actorControl.changeView(viewWidth, viewQuality)
+    var sensorTickCounter = 0
+    log(viewWidth, viewQuality)
+    val viewAngle = getViewAngle(viewWidth)
+    val turnNeckCount = ceil(maxVisibleAngle / viewAngle).toInt()
+    var neckAngel = -viewAngle.toInt()
+    if (turnNeckCount % 2 == 0) {
+      neckAngel /= 2
+    }
 
+    val scheduler = Executors.newScheduledThreadPool(1)
+    val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
+    scheduler.scheduleAtFixedRate({
+      actorControl.turnNeck(neckAngel)
+      val vp: List<VisiblePlayer> = getVisiblePlayers(actorControl.receive())
+      if (vp.isNotEmpty()) {
+        usefulAngels[neckAngel] = vp
+      }
+      neckAngel += viewAngle.toInt()
+      if (sensorTickCounter == sensorTicksForGettingMinimalQualityInfo) {
+        println(usefulAngels)
+        scheduler.shutdown()
+      }
+      ++sensorTickCounter
+    }, 0, scheduleFreq, TimeUnit.MILLISECONDS)
+  }
+
+  private fun getVisiblePlayers(receivePacket: DatagramPacket): List<VisiblePlayer> {
+    val modifiedSentence = String(receivePacket.data, 0, receivePacket.length - 1)
+
+    var vp: List<VisiblePlayer> = ArrayList()
+    if (!modifiedSentence.contains("warning", true) && !modifiedSentence.contains("error", true)) {
+      //println("FROM SERVER: $modifiedSentence")
+      if (modifiedSentence.contains("(p \"", true)) {
+        vp = parseVisiblePlayers(modifiedSentence)
+        //println(vp)
+      }
+    }
+    return vp
   }
 
   fun countVisualTickForEstimate(): Int {
@@ -89,5 +148,15 @@ class VisualSensorAlgorithm {
 
   fun getHighQualityVisualInfo() {
 
+  }
+
+  fun log(viewWidth: ViewWidth, viewQuality: ViewQuality) {
+    println(this)
+    println("Frequency for $viewWidth $viewQuality: ${getViewFrequency(viewWidth, viewQuality)}")
+    println("Angel for $viewWidth: ${getViewAngle(viewWidth)}")
+  }
+
+  override fun toString(): String {
+    return "VisualSensorAlgorithm(boundAngel=$boundAngel, tickUntilAction=$tickUntilAction, maxVisibleAngle=$maxVisibleAngle, sensorTickWithoutMainObject=$sensorTickWithoutMainObject, sensorTicksForGettingMinimalQualityInfo=$sensorTicksForGettingMinimalQualityInfo, estimateSensorTickWithoutMainObject=$estimateSensorTickWithoutMainObject, visualTickForEstimate=$visualTickForEstimate, estimateUsefulnessAngles=$estimateUsefulnessAngles, usefulAngels=$usefulAngels)"
   }
 }

@@ -1,11 +1,6 @@
 package diploma.control
 
-import diploma.constants.KICKER
 import diploma.constants.server.IP_ADDRESS
-import diploma.model.VisiblePlayer
-import diploma.visiblePlayers
-import diploma.visiblePlayersCount
-import diploma.vision.parseVisiblePlayers
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -42,11 +37,11 @@ fun initTrainer(clientSocket: DatagramSocket): DatagramPacket {
 fun sendAndReceiveCommand(clientSocket: DatagramSocket, command: String, params: String,
                           host: InetAddress, port: Int): DatagramPacket {
   sendDataToServer(command, params, host, port, clientSocket)
-  return receiveDataFromServer(clientSocket, command, params)
+  return receiveDataFromServer(clientSocket)
 }
 
-fun receiveCommand(clientSocket: DatagramSocket, command: String, params: String): DatagramPacket {
-  return receiveDataFromServer(clientSocket, command, params)
+fun receiveCommand(clientSocket: DatagramSocket): DatagramPacket {
+  return receiveDataFromServer(clientSocket)
 }
 
 private fun sendDataToServer(command: String, params: String, IPAddress: InetAddress, port: Int, clientSocket: DatagramSocket) {
@@ -59,29 +54,9 @@ private fun sendDataToServer(command: String, params: String, IPAddress: InetAdd
   clientSocket.send(packetToSend)
 }
 
-fun receiveDataFromServer(clientSocket: DatagramSocket, command: String, params: String): DatagramPacket {
+fun receiveDataFromServer(clientSocket: DatagramSocket): DatagramPacket {
   val receiveData = ByteArray(1024)
   val receivePacket = DatagramPacket(receiveData, receiveData.size)
   clientSocket.receive(receivePacket)
-
-  printlnAnswerFromServer(receivePacket, command, params)
   return receivePacket
-}
-
-private fun printlnAnswerFromServer(receivePacket: DatagramPacket, command: String, params: String) {
-  val modifiedSentence = String(receivePacket.data, 0, receivePacket.length - 1)
-  val param = StringBuilder("")
-  if (!params.isBlank()) {
-    param.append(" ").append(params)
-  }
-  if (!modifiedSentence.contains("warning", true) && !modifiedSentence.contains("error", true)) {
-    //println("FROM SERVER ($command$param):$modifiedSentence")
-
-    if (modifiedSentence.contains("(p \"", true) && Thread.currentThread().name == KICKER) {
-      val vp: List<VisiblePlayer> = parseVisiblePlayers(modifiedSentence)
-      visiblePlayers.addAll(vp)
-      visiblePlayersCount += vp.size
-      //println(vp)
-    }
-  }
 }

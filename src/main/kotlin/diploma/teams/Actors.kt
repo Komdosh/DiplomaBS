@@ -1,7 +1,7 @@
 package diploma.teams
 
 import diploma.constants.server.SERVER_STOP_TIMEOUT
-import diploma.control.Actions
+import diploma.control.Action
 import diploma.control.initPayer
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -14,7 +14,7 @@ abstract class Actors {
   fun sillyRotateActor(config: PlayerConfig, teamName: String): Runnable {
     return initPayer(teamName) { clientSocket: DatagramSocket, host: InetAddress, port: Int ->
 
-      val action = Actions(clientSocket, host, port)
+      val action = Action(clientSocket, host, port)
       action.move(config.initialX, config.initialY)
 
       action.runAndReturn()

@@ -5,10 +5,11 @@ import diploma.constants.TICK_MAX
 import diploma.constants.server.TICK
 import diploma.constants.server.ViewQuality
 import diploma.constants.server.ViewWidth
+import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 
-class Actions(private val clientSocket: DatagramSocket, private val host: InetAddress, private val port: Int) {
+class Action(private val clientSocket: DatagramSocket, private val host: InetAddress, private val port: Int) {
 
   fun move(x: Int, y: Int) {
     sendWithTick("move", "$x $y")
@@ -34,8 +35,8 @@ class Actions(private val clientSocket: DatagramSocket, private val host: InetAd
     send("change_view", "$width $quality")
   }
 
-  fun receive() {
-    receiveCommand(clientSocket, "No Command", "")
+  fun receive(): DatagramPacket {
+    return receiveCommand(clientSocket)
   }
 
   private fun sendWithTick(command: String, param: String) {

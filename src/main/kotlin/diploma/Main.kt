@@ -4,16 +4,13 @@ import diploma.constants.KICKER
 import diploma.constants.server.SERVER_START_TIMEOUT
 import diploma.constants.server.SERVER_STOP_TIMEOUT
 import diploma.constants.server.TICK
-import diploma.model.VisiblePlayer
 import diploma.teams.Actors
 import diploma.teams.attack.Attack
 import diploma.teams.def.Def
 import teams.Trainings.Trainer
 import java.lang.System.exit
 
-var visiblePlayersCount = 0
-val visiblePlayers: MutableList<VisiblePlayer> = ArrayList()
-const val simulationRepeat: Int = 1
+const val simulationRepeat: Int = 0
 
 
 fun main(args: Array<String>) {
@@ -27,16 +24,7 @@ fun main(args: Array<String>) {
 
     val turnMoment = attack.configs[KICKER]!!.turnNeck
     val kickDirection = attack.configs[KICKER]!!.kickDirection
-    println("turn moment: $turnMoment | kick direction: $kickDirection | seeing players: $visiblePlayersCount")
-
-    visiblePlayersCount = 0
-    visiblePlayers.clear()
-
-    if (turnMoment - 10 == 10) {
-      attack.configs[KICKER]!!.turnNeck = 90
-    } else {
-      attack.configs[KICKER]!!.turnNeck = turnMoment - 10
-    }
+    println("turn moment: $turnMoment | kick direction: $kickDirection")
     println("-----------------------------------------")
   }
 
