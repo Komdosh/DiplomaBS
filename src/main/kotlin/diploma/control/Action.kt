@@ -27,12 +27,12 @@ class Action(private val clientSocket: DatagramSocket, private val host: InetAdd
     sendWithTick("turn", "$angle")
   }
 
-  fun turnNeck(angle: Int) {
-    send("turn_neck", "$angle")
+  fun turnNeck(angle: Int): DatagramPacket {
+    return send("turn_neck", "$angle")
   }
 
-  fun changeView(width: ViewWidth, quality: ViewQuality) {
-    send("change_view", "$width $quality")
+  fun changeView(width: ViewWidth, quality: ViewQuality): DatagramPacket {
+    return send("change_view", "$width $quality")
   }
 
   fun receive(): DatagramPacket {
@@ -44,8 +44,8 @@ class Action(private val clientSocket: DatagramSocket, private val host: InetAdd
     Thread.sleep(TICK.toLong())
   }
 
-  private fun send(command: String, param: String) {
-    sendAndReceiveCommand(clientSocket, command, param, host, port)
+  private fun send(command: String, param: String): DatagramPacket {
+    return sendAndReceiveCommand(clientSocket, command, param, host, port)
   }
 
   fun runAndReturn() {

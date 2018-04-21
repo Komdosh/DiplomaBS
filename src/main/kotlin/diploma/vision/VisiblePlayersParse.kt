@@ -2,6 +2,7 @@ package diploma.vision
 
 import diploma.model.VisiblePlayer
 import diploma.model.VisiblePlayerExtInfo
+import java.net.DatagramPacket
 import kotlin.streams.toList
 
 fun parseVisiblePlayers(message: String): List<VisiblePlayer> {
@@ -26,6 +27,14 @@ fun parseVisiblePlayers(message: String): List<VisiblePlayer> {
 
     VisiblePlayer(teamName, playerNumber, direction, distance, visiblePlayerExtInfo, tick)
   }.toList()
+}
+
+fun isMessageSee(message: String): Boolean {
+  return message.contains("see", true)
+}
+
+fun getServerMessage(receivePacket: DatagramPacket): String {
+  return String(receivePacket.data, 0, receivePacket.length - 1)
 }
 
 private fun getVisiblePlayerExtInfo(detailedInfo: Array<Int?>): VisiblePlayerExtInfo? {

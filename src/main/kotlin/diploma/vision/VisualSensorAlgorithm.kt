@@ -8,7 +8,6 @@ import diploma.model.VisiblePlayer
 import diploma.teams.PlayerConfig
 import java.lang.Math.ceil
 import java.lang.Math.floor
-import java.net.DatagramPacket
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -104,15 +103,19 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     var sensorTickCounter = 0
     val viewAngle = getViewAngle(viewWidth)
     var neckAngel = (-boundAngel + (viewAngle / 2)).toInt()
+    val scheduleFrequency = getViewFrequency(viewWidth, viewQuality).toLong()
+    var initialSchedulerDelay = 0L
+    val turnNeckOnce = sensorTicksForGettingMinimalQualityInfo == 1
+    if (turnNeckOnce) {
+      actorControl.turnNeck(usefulAngels[0])
+      initialSchedulerDelay = scheduleFrequency
+    }
 
-    schedulerByView(viewWidth, viewQuality) { scheduler ->
-      actorControl.turnNeck(neckAngel)
-      val vp: List<VisiblePlayer> = getVisiblePlayers(actorControl.receive())
-      if (vp.isNotEmpty()) {
-        lowQualityPlayersInfo[neckAngel] = vp
-      }
+    schedulerByView(initialSchedulerDelay, viewWidth, viewQuality) { scheduler ->
+      turnNeckAndGetInfo(turnNeckOnce, neckAngel, scheduleFrequency, lowQualityPlayersInfo)
+
       neckAngel += viewAngle.toInt()
-      if (sensorTickCounter == sensorTicksForGettingMinimalQualityInfo + 1) {
+      if (sensorTickCounter == sensorTicksForGettingMinimalQualityInfo) {
         afterLowQualityGet()
         scheduler.shutdown()
       }
@@ -120,14 +123,12 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     }
   }
 
-  private fun getVisiblePlayers(receivePacket: DatagramPacket): List<VisiblePlayer> {
-    val modifiedSentence = String(receivePacket.data, 0, receivePacket.length - 1)
-
+  private fun getVisiblePlayers(serverMessage: String): List<VisiblePlayer> {
     var vp: List<VisiblePlayer> = ArrayList()
-    if (!modifiedSentence.contains("warning", true) && !modifiedSentence.contains("error", true)) {
-      //println("FROM SERVER: $modifiedSentence")
-      if (modifiedSentence.contains("(p \"", true)) {
-        vp = parseVisiblePlayers(modifiedSentence)
+    if (!serverMessage.contains("warning", true) && !serverMessage.contains("error", true)) {
+      //println("FROM SERVER: $serverMessage")
+      if (serverMessage.contains("(p \"", true)) {
+        vp = parseVisiblePlayers(serverMessage)
         //println(vp)
       }
     }
@@ -145,11 +146,16 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   }
 
   fun calculateEstimateUsefulnessAngles() {
+    var estimate = 0.0
     lowQualityPlayersInfo.forEach { angel, visiblePlayers ->
       val averageEstimate = visiblePlayers.map { getEstimateForVisiblePlayer(it) }.average()
       println("Angel: $angel, Estimate: $averageEstimate")
       if (averageEstimate > estimateBound) {
         usefulAngels.add(angel)
+      }
+      if (averageEstimate > estimate) {
+        config.kickDirection = angel
+        estimate = averageEstimate
       }
     }
   }
@@ -167,20 +173,57 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
 
   private fun getHighQualityVisualInfo(viewWidth: ViewWidth = ViewWidth.NARROW, viewQuality: ViewQuality = ViewQuality.HIGH) {
     actorControl.changeView(viewWidth, viewQuality)
+    val turnNeckOnce = usefulAngels.size == 1
+    var initialSchedulerDelay = 0L
+    val scheduleFrequency = getViewFrequency(viewWidth, viewQuality).toLong()
+    if (turnNeckOnce) {
+      actorControl.turnNeck(usefulAngels[0])
+      initialSchedulerDelay = scheduleFrequency
+    }
+    println(initialSchedulerDelay)
     var angelsCounter = 0
+    var allUsefulAngelsChecked = false
+    schedulerByView(initialSchedulerDelay, viewWidth, viewQuality) { scheduler ->
+      val vp: List<VisiblePlayer> = turnNeckAndGetInfo(turnNeckOnce, usefulAngels[angelsCounter], scheduleFrequency, highQualityPlayersInfo)
 
-    schedulerByView(viewWidth, viewQuality) { scheduler ->
-      actorControl.turnNeck(usefulAngels[angelsCounter])
-      val vp: List<VisiblePlayer> = getVisiblePlayers(actorControl.receive())
-      if (vp.isNotEmpty()) {
-        highQualityPlayersInfo[usefulAngels[angelsCounter]] = vp
-      }
-      ++angelsCounter
-      if (usefulAngels.size == angelsCounter) {
+      if (vp.isNotEmpty() && allUsefulAngelsChecked) {
         afterHighQualityGet()
         scheduler.shutdown()
       }
+
+      angelsCounter = (angelsCounter + 1) % usefulAngels.size
+      if (angelsCounter == 0) {
+        allUsefulAngelsChecked = true
+      }
     }
+  }
+
+  private fun turnNeckAndGetInfo(turnNeckOnce: Boolean, angel: Int, scheduleFrequency: Long,
+                                 qualityMap: MutableMap<Int, List<VisiblePlayer>>): List<VisiblePlayer> {
+    var vp: List<VisiblePlayer> = ArrayList()
+    var isSee = false
+    var message = ""
+    if (!turnNeckOnce) {
+      message = getServerMessage(actorControl.turnNeck(angel))
+      isSee = isMessageSee(message)
+    }
+
+    if ((isSee && vp.isEmpty()) || turnNeckOnce) {
+      if (!turnNeckOnce) {
+        Thread.sleep(scheduleFrequency)
+      }
+      message = getServerMessage(actorControl.receive())
+      isSee = isMessageSee(message)
+    }
+
+    if (isSee) {
+      vp = getVisiblePlayers(message)
+    }
+
+    if (vp.isNotEmpty()) {
+      qualityMap[angel] = vp
+    }
+    return vp
   }
 
   private fun afterHighQualityGet() {
@@ -196,11 +239,14 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     }
   }
 
-  private fun schedulerByView(viewWidth: ViewWidth, viewQuality: ViewQuality, run: (scheduler: ScheduledExecutorService) -> Unit) {
+  private fun schedulerByView(initialDelay: Long, viewWidth: ViewWidth, viewQuality: ViewQuality, run: (scheduler: ScheduledExecutorService) -> Unit) {
+    if (tickUntilAction.get() <= 1) {
+      return
+    }
     log(viewWidth, viewQuality)
     val scheduler = Executors.newScheduledThreadPool(1)
     val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
-    scheduler.scheduleAtFixedRate({ run(scheduler) }, 0, scheduleFreq, TimeUnit.MILLISECONDS)
+    scheduler.scheduleAtFixedRate({ run(scheduler) }, initialDelay, scheduleFreq, TimeUnit.MILLISECONDS)
   }
 
   private fun log(viewWidth: ViewWidth, viewQuality: ViewQuality) {
