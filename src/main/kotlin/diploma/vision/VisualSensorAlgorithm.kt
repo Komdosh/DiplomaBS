@@ -10,6 +10,7 @@ import java.lang.Math.ceil
 import java.lang.Math.floor
 import java.net.DatagramPacket
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -101,25 +102,22 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   fun getLowQualityVisualInfo(viewWidth: ViewWidth = ViewWidth.NARROW, viewQuality: ViewQuality = ViewQuality.LOW) {
     actorControl.changeView(viewWidth, viewQuality)
     var sensorTickCounter = 0
-    log(viewWidth, viewQuality)
     val viewAngle = getViewAngle(viewWidth)
-    var neckAngel = (-boundAngel + viewAngle / 2).toInt()
+    var neckAngel = (-boundAngel + (viewAngle / 2)).toInt()
 
-    val scheduler = Executors.newScheduledThreadPool(1)
-    val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
-    scheduler.scheduleAtFixedRate({
+    schedulerByView(viewWidth, viewQuality) { scheduler ->
       actorControl.turnNeck(neckAngel)
       val vp: List<VisiblePlayer> = getVisiblePlayers(actorControl.receive())
       if (vp.isNotEmpty()) {
         lowQualityPlayersInfo[neckAngel] = vp
       }
       neckAngel += viewAngle.toInt()
-      if (sensorTickCounter == sensorTicksForGettingMinimalQualityInfo + 2) {
+      if (sensorTickCounter == sensorTicksForGettingMinimalQualityInfo + 1) {
         afterLowQualityGet()
         scheduler.shutdown()
       }
       ++sensorTickCounter
-    }, 0, scheduleFreq, TimeUnit.MILLISECONDS)
+    }
   }
 
   private fun getVisiblePlayers(receivePacket: DatagramPacket): List<VisiblePlayer> {
@@ -169,11 +167,9 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
 
   private fun getHighQualityVisualInfo(viewWidth: ViewWidth = ViewWidth.NARROW, viewQuality: ViewQuality = ViewQuality.HIGH) {
     actorControl.changeView(viewWidth, viewQuality)
-    val scheduler = Executors.newScheduledThreadPool(1)
-    val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
     var angelsCounter = 0
-    log(viewWidth, viewQuality)
-    scheduler.scheduleAtFixedRate({
+
+    schedulerByView(viewWidth, viewQuality) { scheduler ->
       actorControl.turnNeck(usefulAngels[angelsCounter])
       val vp: List<VisiblePlayer> = getVisiblePlayers(actorControl.receive())
       if (vp.isNotEmpty()) {
@@ -184,7 +180,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
         afterHighQualityGet()
         scheduler.shutdown()
       }
-    }, 0, scheduleFreq, TimeUnit.MILLISECONDS)
+    }
   }
 
   private fun afterHighQualityGet() {
@@ -198,6 +194,13 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
         estimate = averageEstimate
       }
     }
+  }
+
+  private fun schedulerByView(viewWidth: ViewWidth, viewQuality: ViewQuality, run: (scheduler: ScheduledExecutorService) -> Unit) {
+    log(viewWidth, viewQuality)
+    val scheduler = Executors.newScheduledThreadPool(1)
+    val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
+    scheduler.scheduleAtFixedRate({ run(scheduler) }, 0, scheduleFreq, TimeUnit.MILLISECONDS)
   }
 
   private fun log(viewWidth: ViewWidth, viewQuality: ViewQuality) {
