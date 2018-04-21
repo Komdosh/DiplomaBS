@@ -5,6 +5,7 @@ import diploma.constants.server.ViewQuality
 import diploma.constants.server.ViewWidth
 import diploma.control.Action
 import diploma.model.VisiblePlayer
+import diploma.teams.PlayerConfig
 import java.lang.Math.ceil
 import java.lang.Math.floor
 import java.net.DatagramPacket
@@ -12,8 +13,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-class VisualSensorAlgorithm(private val actorControl: Action) {
+class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorControl: Action) {
 
+  private val estimateBound = 10
   private val boundAngel: Double = 90.0
 
   private var tickUntilAction: AtomicInteger = AtomicInteger(8) //hardcoded for now
@@ -21,9 +23,9 @@ class VisualSensorAlgorithm(private val actorControl: Action) {
   private var sensorTickWithoutMainObject: Int = 0
   private var sensorTicksForGettingMinimalQualityInfo: Int = 0
   private var estimateSensorTickWithoutMainObject: Int = 0
-  private var visualTickForEstimate: Int = 0
-  private var estimateUsefulnessAngles: Int = 0
-  private val usefulAngels: MutableMap<Int, List<VisiblePlayer>> = HashMap()
+  private val lowQualityPlayersInfo: MutableMap<Int, List<VisiblePlayer>> = HashMap()
+  private val highQualityPlayersInfo: MutableMap<Int, List<VisiblePlayer>> = HashMap()
+  private val usefulAngels: MutableList<Int> = ArrayList()
 
   fun start() {
     val scheduler = Executors.newScheduledThreadPool(1)
@@ -52,7 +54,7 @@ class VisualSensorAlgorithm(private val actorControl: Action) {
 
   fun calculateSensorTicksForGetMinimalQualityInfo(): Int {
     sensorTicksForGettingMinimalQualityInfo = ceil(maxVisibleAngle / getViewAngle(ViewWidth.NARROW) *
-        getViewFrequency(ViewWidth.NARROW, ViewQuality.LOW) / TICK).toInt()
+        getViewFrequency(ViewWidth.NARROW, ViewQuality.LOW) / TICK).toInt() + 1
     return sensorTicksForGettingMinimalQualityInfo
   }
 
@@ -101,11 +103,7 @@ class VisualSensorAlgorithm(private val actorControl: Action) {
     var sensorTickCounter = 0
     log(viewWidth, viewQuality)
     val viewAngle = getViewAngle(viewWidth)
-    val turnNeckCount = ceil(maxVisibleAngle / viewAngle).toInt()
-    var neckAngel = -viewAngle.toInt()
-    if (turnNeckCount % 2 == 0) {
-      neckAngel /= 2
-    }
+    var neckAngel = (-boundAngel + viewAngle / 2).toInt()
 
     val scheduler = Executors.newScheduledThreadPool(1)
     val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
@@ -113,11 +111,11 @@ class VisualSensorAlgorithm(private val actorControl: Action) {
       actorControl.turnNeck(neckAngel)
       val vp: List<VisiblePlayer> = getVisiblePlayers(actorControl.receive())
       if (vp.isNotEmpty()) {
-        usefulAngels[neckAngel] = vp
+        lowQualityPlayersInfo[neckAngel] = vp
       }
       neckAngel += viewAngle.toInt()
-      if (sensorTickCounter == sensorTicksForGettingMinimalQualityInfo) {
-        println(usefulAngels)
+      if (sensorTickCounter == sensorTicksForGettingMinimalQualityInfo + 2) {
+        afterLowQualityGet()
         scheduler.shutdown()
       }
       ++sensorTickCounter
@@ -138,25 +136,77 @@ class VisualSensorAlgorithm(private val actorControl: Action) {
     return vp
   }
 
-  fun countVisualTickForEstimate(): Int {
-    return 0
+  private fun afterLowQualityGet() {
+    println(lowQualityPlayersInfo)
+    if (lowQualityPlayersInfo.isEmpty()) {
+      getLowQualityVisualInfo()
+    } else {
+      calculateEstimateUsefulnessAngles()
+      getHighQualityVisualInfo()
+    }
   }
 
-  fun estimateUsefulnessAngles(): Int {
-    return 0
+  fun calculateEstimateUsefulnessAngles() {
+    lowQualityPlayersInfo.forEach { angel, visiblePlayers ->
+      val averageEstimate = visiblePlayers.map { getEstimateForVisiblePlayer(it) }.average()
+      println("Angel: $angel, Estimate: $averageEstimate")
+      if (averageEstimate > estimateBound) {
+        usefulAngels.add(angel)
+      }
+    }
   }
 
-  fun getHighQualityVisualInfo() {
-
+  private fun getEstimateForVisiblePlayer(vp: VisiblePlayer): Int {
+    val attackTeamName = "Attack"
+    var estimate = 0
+    estimate += if (vp.teamName.isNullOrBlank()) 0 else 2
+    estimate += if (vp.teamName.equals(attackTeamName)) 10 else 5
+    estimate += if (vp.direction == null) 0 else 6
+    estimate += if (vp.ext == null) 0 else 4
+    estimate += if (vp.distance == null) 0 else 6
+    return estimate
   }
 
-  fun log(viewWidth: ViewWidth, viewQuality: ViewQuality) {
+  private fun getHighQualityVisualInfo(viewWidth: ViewWidth = ViewWidth.NARROW, viewQuality: ViewQuality = ViewQuality.HIGH) {
+    actorControl.changeView(viewWidth, viewQuality)
+    val scheduler = Executors.newScheduledThreadPool(1)
+    val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
+    var angelsCounter = 0
+    log(viewWidth, viewQuality)
+    scheduler.scheduleAtFixedRate({
+      actorControl.turnNeck(usefulAngels[angelsCounter])
+      val vp: List<VisiblePlayer> = getVisiblePlayers(actorControl.receive())
+      if (vp.isNotEmpty()) {
+        highQualityPlayersInfo[usefulAngels[angelsCounter]] = vp
+      }
+      ++angelsCounter
+      if (usefulAngels.size == angelsCounter) {
+        afterHighQualityGet()
+        scheduler.shutdown()
+      }
+    }, 0, scheduleFreq, TimeUnit.MILLISECONDS)
+  }
+
+  private fun afterHighQualityGet() {
+    println(highQualityPlayersInfo)
+    var estimate = 0.0
+    val mapForEstimate = if (highQualityPlayersInfo.isEmpty()) lowQualityPlayersInfo else highQualityPlayersInfo
+    mapForEstimate.forEach { angel, visiblePlayers ->
+      val averageEstimate = visiblePlayers.map { getEstimateForVisiblePlayer(it) }.average()
+      if (averageEstimate > estimate) {
+        config.kickDirection = angel
+        estimate = averageEstimate
+      }
+    }
+  }
+
+  private fun log(viewWidth: ViewWidth, viewQuality: ViewQuality) {
     println(this)
     println("Frequency for $viewWidth $viewQuality: ${getViewFrequency(viewWidth, viewQuality)}")
     println("Angel for $viewWidth: ${getViewAngle(viewWidth)}")
   }
 
   override fun toString(): String {
-    return "VisualSensorAlgorithm(boundAngel=$boundAngel, tickUntilAction=$tickUntilAction, maxVisibleAngle=$maxVisibleAngle, sensorTickWithoutMainObject=$sensorTickWithoutMainObject, sensorTicksForGettingMinimalQualityInfo=$sensorTicksForGettingMinimalQualityInfo, estimateSensorTickWithoutMainObject=$estimateSensorTickWithoutMainObject, visualTickForEstimate=$visualTickForEstimate, estimateUsefulnessAngles=$estimateUsefulnessAngles, usefulAngels=$usefulAngels)"
+    return "VisualSensorAlgorithm(boundAngel=$boundAngel, tickUntilAction=$tickUntilAction, maxVisibleAngle=$maxVisibleAngle, sensorTickWithoutMainObject=$sensorTickWithoutMainObject, sensorTicksForGettingMinimalQualityInfo=$sensorTicksForGettingMinimalQualityInfo, estimateSensorTickWithoutMainObject=$estimateSensorTickWithoutMainObject, lowQualityPlayersInfo=$lowQualityPlayersInfo)"
   }
 }

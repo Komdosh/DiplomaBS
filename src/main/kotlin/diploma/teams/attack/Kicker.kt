@@ -19,7 +19,7 @@ open class Kicker(private val config: PlayerConfig) {
 
       val action = Action(clientSocket, host, port)
       action.move(config.initialX, config.initialY)
-      val visualSensorAlgorithm = VisualSensorAlgorithm(action)
+      val visualSensorAlgorithm = VisualSensorAlgorithm(config, action)
 
       Thread.sleep(START_TIMEOUT)
 
@@ -29,7 +29,6 @@ open class Kicker(private val config: PlayerConfig) {
       val scheduler = Executors.newScheduledThreadPool(1)
       scheduler.scheduleAtFixedRate({ action.receive() }, 0, 10, TimeUnit.MILLISECONDS)
 
-      action.kick(config.kickPower, config.kickDirection)
 
       visualSensorAlgorithm.start()
       for (i in 0..TICK_MAX - 3) {

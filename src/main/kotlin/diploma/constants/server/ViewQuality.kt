@@ -1,7 +1,7 @@
 package diploma.constants.server
 
 enum class ViewQuality(private val quality: String) {
-  LOW("low"), HIGH("low");
+  LOW("low"), HIGH("high");
 
   fun getFactor(): Double {
     return when (this) {
