@@ -1,5 +1,6 @@
 package diploma.vision
 
+import diploma.constants.server.NOT_SET
 import diploma.constants.server.TICK
 import diploma.constants.server.ViewQuality
 import diploma.constants.server.ViewWidth
@@ -26,6 +27,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   private val lowQualityPlayersInfo: MutableMap<Int, List<VisiblePlayer>> = HashMap()
   private val highQualityPlayersInfo: MutableMap<Int, List<VisiblePlayer>> = HashMap()
   private val usefulAngels: MutableList<Int> = ArrayList()
+  private val objectBodyAngel: Int = 0 //hardcoded for now
 
   fun start() {
     val scheduler = Executors.newScheduledThreadPool(1)
@@ -103,6 +105,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     var sensorTickCounter = 0
     val viewAngle = getViewAngle(viewWidth)
     var neckAngel = (-boundAngel + (viewAngle / 2)).toInt()
+    var savedNeckAngel = NOT_SET
     val scheduleFrequency = getViewFrequency(viewWidth, viewQuality).toLong()
     var initialSchedulerDelay = 0L
     val turnNeckOnce = sensorTicksForGettingMinimalQualityInfo == 1
@@ -111,7 +114,22 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
       initialSchedulerDelay = scheduleFrequency
     }
 
+    var iterationWithoutMainObject = 0
     schedulerByView(initialSchedulerDelay, viewWidth, viewQuality) { scheduler ->
+      if (savedNeckAngel != NOT_SET) {
+        neckAngel = savedNeckAngel
+      } else {
+        savedNeckAngel = neckAngel
+      }
+
+      val (angel, iteration) = getNeckAngelAndIterationWMO(turnNeckOnce, viewWidth, neckAngel, iterationWithoutMainObject)
+      iterationWithoutMainObject = iteration
+      neckAngel = angel
+
+      if (neckAngel == savedNeckAngel) {
+        savedNeckAngel = NOT_SET
+      }
+
       turnNeckAndGetInfo(turnNeckOnce, neckAngel, scheduleFrequency, lowQualityPlayersInfo)
 
       neckAngel += viewAngle.toInt()
@@ -121,6 +139,24 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
       }
       ++sensorTickCounter
     }
+  }
+
+  private fun getNeckAngelAndIterationWMO(turnNeckOnce: Boolean, viewWidth: ViewWidth, neckAngel: Int, iterationWithoutMainObject: Int): Pair<Int, Int> {
+    var localNeckAngel = neckAngel
+    var localIterationWithoutMainObject = iterationWithoutMainObject
+    if (!turnNeckOnce && estimateSensorTickWithoutMainObject > 0) {
+      if (!isObjectInAngel(viewWidth, objectBodyAngel, localNeckAngel)) {
+        if (estimateSensorTickWithoutMainObject == localIterationWithoutMainObject) {
+          localNeckAngel = objectBodyAngel
+          localIterationWithoutMainObject = 0
+        } else {
+          ++localIterationWithoutMainObject
+        }
+      } else {
+        localIterationWithoutMainObject = 0
+      }
+    }
+    return Pair(localNeckAngel, localIterationWithoutMainObject)
   }
 
   private fun getVisiblePlayers(serverMessage: String): List<VisiblePlayer> {
@@ -180,13 +216,23 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
       actorControl.turnNeck(usefulAngels[0])
       initialSchedulerDelay = scheduleFrequency
     }
-    println(initialSchedulerDelay)
     var angelsCounter = 0
     var allUsefulAngelsChecked = false
+    var iterationWithoutMainObject = 0
     schedulerByView(initialSchedulerDelay, viewWidth, viewQuality) { scheduler ->
-      val vp: List<VisiblePlayer> = turnNeckAndGetInfo(turnNeckOnce, usefulAngels[angelsCounter], scheduleFrequency, highQualityPlayersInfo)
+      var neckAngel = usefulAngels[angelsCounter]
 
-      if (vp.isNotEmpty() && allUsefulAngelsChecked) {
+      val (angel, iteration) = getNeckAngelAndIterationWMO(turnNeckOnce, viewWidth, neckAngel, iterationWithoutMainObject)
+      iterationWithoutMainObject = iteration
+      neckAngel = angel
+
+      if (neckAngel != usefulAngels[angelsCounter]) {
+        --angelsCounter
+      }
+
+      turnNeckAndGetInfo(turnNeckOnce, neckAngel, scheduleFrequency, highQualityPlayersInfo)
+
+      if (allUsefulAngelsChecked) {
         afterHighQualityGet()
         scheduler.shutdown()
       }
@@ -226,6 +272,11 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     return vp
   }
 
+  private fun isObjectInAngel(viewWidth: ViewWidth, objectBodyAngel: Int, direction: Int): Boolean {
+    val halfSeeAngel = getViewAngle(viewWidth) / 2
+    return objectBodyAngel > (halfSeeAngel - direction) && objectBodyAngel < (halfSeeAngel + direction)
+  }
+
   private fun afterHighQualityGet() {
     println(highQualityPlayersInfo)
     var estimate = 0.0
@@ -240,14 +291,21 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   }
 
   private fun schedulerByView(initialDelay: Long, viewWidth: ViewWidth, viewQuality: ViewQuality, run: (scheduler: ScheduledExecutorService) -> Unit) {
-    if (tickUntilAction.get() <= 1) {
+    if (isTimeOver()) {
       return
     }
     log(viewWidth, viewQuality)
     val scheduler = Executors.newScheduledThreadPool(1)
     val scheduleFreq = getViewFrequency(viewWidth, viewQuality).toLong()
-    scheduler.scheduleAtFixedRate({ run(scheduler) }, initialDelay, scheduleFreq, TimeUnit.MILLISECONDS)
+    scheduler.scheduleAtFixedRate({
+      run(scheduler)
+      if (isTimeOver()) {
+        scheduler.shutdown()
+      }
+    }, initialDelay, scheduleFreq, TimeUnit.MILLISECONDS)
   }
+
+  private fun isTimeOver() = tickUntilAction.get() <= 1
 
   private fun log(viewWidth: ViewWidth, viewQuality: ViewQuality) {
     println(this)
