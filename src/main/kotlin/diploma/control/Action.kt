@@ -55,5 +55,12 @@ class Action(private val clientSocket: DatagramSocket, private val host: InetAdd
       turn(180)
     }
   }
+
+  fun runAhead() {
+    Thread.sleep(START_TIMEOUT)
+    for (i in 0..TICK_MAX / 2) {
+      dash(90)
+    }
+  }
 }
 

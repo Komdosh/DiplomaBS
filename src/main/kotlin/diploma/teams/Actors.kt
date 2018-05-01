@@ -21,4 +21,15 @@ abstract class Actors {
       Thread.sleep(SERVER_STOP_TIMEOUT)
     }
   }
+
+  fun sillySpyActor(config: PlayerConfig, teamName: String): Runnable {
+    return initPayer(teamName) { clientSocket: DatagramSocket, host: InetAddress, port: Int ->
+
+      val action = Action(clientSocket, host, port)
+      action.move(config.initialX, config.initialY)
+
+      action.runAhead()
+      Thread.sleep(SERVER_STOP_TIMEOUT)
+    }
+  }
 }
