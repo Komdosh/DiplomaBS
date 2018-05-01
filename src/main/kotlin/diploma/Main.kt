@@ -22,9 +22,9 @@ fun main(args: Array<String>) {
   for (i in 0..simulationRepeat) {
     runServer(Runnable { runActors(attack, def, trainer) })
 
-    val turnMoment = attack.configs[KICKER]!!.turnNeck
+    val turnNeckMoment = attack.configs[KICKER]!!.turnNeck
     val kickDirection = attack.configs[KICKER]!!.kickDirection
-    println("turn moment: $turnMoment | kick direction: $kickDirection")
+    println("turn neck moment: $turnNeckMoment | kick direction: $kickDirection")
     println("-----------------------------------------")
   }
 

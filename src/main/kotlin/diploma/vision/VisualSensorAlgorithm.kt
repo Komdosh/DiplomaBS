@@ -31,14 +31,15 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   private val estimateSubSystem: EstimateSubSystem = EstimateSubSystemImpl()
   private val tickService: TickService = TickServiceImpl()
   private val angelService: AngelService = AngelServiceImpl()
+  private var currentViewWidthForLow: ViewWidth = ViewWidth.NORMAL
 
   fun start() {
     tickService.startTick()
-    countSensorTickUntilAction(ViewWidth.NARROW, ViewQuality.LOW)
-    calculateMaxVisibleAngle(ViewWidth.NARROW, ViewQuality.LOW)
+    countSensorTickUntilAction(currentViewWidthForLow, ViewQuality.LOW)
+    calculateMaxVisibleAngle(currentViewWidthForLow, ViewQuality.LOW)
     calculateSensorTicksForGetMinimalQualityInfo()
-    calculateSensorTickWithoutMainObject(ViewWidth.NARROW, ViewQuality.LOW)
-    estimateSensorTickWithoutMainObject(ViewWidth.NARROW)
+    calculateSensorTickWithoutMainObject(currentViewWidthForLow, ViewQuality.LOW)
+    estimateSensorTickWithoutMainObject(currentViewWidthForLow)
     getVisualInfo(false)
   }
 
@@ -46,8 +47,8 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
       floor(tickService.getUntilAction() * TICK / getViewFrequency(viewWidth, viewQuality)).toInt()
 
   fun calculateSensorTicksForGetMinimalQualityInfo(): Int {
-    sensorTicksForGettingMinimalQualityInfo = ceil(maxVisibleAngle / getViewAngle(ViewWidth.NARROW) *
-        getViewFrequency(ViewWidth.NARROW, ViewQuality.LOW) / TICK).toInt() + 1
+    sensorTicksForGettingMinimalQualityInfo = ceil(maxVisibleAngle / getViewAngle(currentViewWidthForLow) *
+        getViewFrequency(currentViewWidthForLow, ViewQuality.LOW) / TICK).toInt() + 1
     return sensorTicksForGettingMinimalQualityInfo
   }
 
@@ -130,7 +131,6 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     }
   }
 
-
   private fun getVisualInfo(isHigh: Boolean) {
     val viewWidth: ViewWidth
     val viewQuality: ViewQuality
@@ -138,7 +138,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
       viewWidth = ViewWidth.NARROW
       viewQuality = ViewQuality.HIGH
     } else {
-      viewWidth = ViewWidth.NARROW
+      viewWidth = currentViewWidthForLow
       viewQuality = ViewQuality.LOW
       initAnglesForLowQuality(getViewAngle(viewWidth))
     }
@@ -148,7 +148,6 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     if (turnNeckOnce) {
       turnNeck(angelsToView[0])
       afterGetInfo(isHigh)
-      return
     }
 
     val scheduleFrequency = getViewFrequency(viewWidth, viewQuality).toLong()
@@ -231,7 +230,17 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     val mapForEstimate = if (isHigh) lowQualityPlayersInfo else highQualityPlayersInfo
 
     if (mapForEstimate.isEmpty()) {
-      getVisualInfo(false)
+      if (!isHigh) {
+        currentViewWidthForLow = when (currentViewWidthForLow) {
+          ViewWidth.WIDE -> ViewWidth.NORMAL
+          ViewWidth.NORMAL -> ViewWidth.NARROW
+          ViewWidth.NARROW -> ViewWidth.NORMAL
+        }
+        start()
+      } else {
+        getVisualInfo(false)
+      }
+
       return
     }
 
