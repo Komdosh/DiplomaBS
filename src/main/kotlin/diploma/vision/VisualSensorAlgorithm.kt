@@ -229,7 +229,6 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   private fun afterGetInfo(isHigh: Boolean) {
     println(if (isHigh) highQualityPlayersInfo else lowQualityPlayersInfo)
     val mapForEstimate = if (isHigh) lowQualityPlayersInfo else highQualityPlayersInfo
-    var averageEstimate = 0.0
 
     if (mapForEstimate.isEmpty()) {
       getVisualInfo(false)
@@ -237,6 +236,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     }
 
     angelsToView.clear()
+    var averageEstimate = 0.0
     mapForEstimate.forEach { angel, visiblePlayers ->
       averageEstimate = correctConfigWithEstimate(visiblePlayers, averageEstimate, angel)
       if (!isHigh && averageEstimate > estimateBound) {
