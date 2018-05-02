@@ -1,2 +1,2 @@
 # Diploma
-Visual sensor algorithm for intelligent multi agent system RoboCup Soccer Server
+Visual sensor algorithm for intelligent multiagent system RoboCup Soccer Server

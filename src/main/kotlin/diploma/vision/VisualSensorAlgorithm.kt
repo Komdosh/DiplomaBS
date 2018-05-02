@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorControl: Action) {
 
   private val estimateBound = 10
-  private val boundAngel: Double = 90.0
+  private val boundAngle: Double = 90.0
 
 
   private var maxVisibleAngle: Double = 0.0
@@ -27,10 +27,10 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   private var estimateSensorTickWithoutMainObject: Int = 0
   private val lowQualityPlayersInfo: MutableMap<Int, List<VisiblePlayer>> = HashMap()
   private val highQualityPlayersInfo: MutableMap<Int, List<VisiblePlayer>> = HashMap()
-  private val angelsToView: MutableList<Int> = ArrayList()
+  private val anglesToView: MutableList<Int> = ArrayList()
   private val estimateSubSystem: EstimateSubSystem = EstimateSubSystemImpl()
   private val tickService: TickService = TickServiceImpl()
-  private val angelService: AngelService = AngelServiceImpl()
+  private val angleService: AngleService = AngleServiceImpl()
   private var currentViewWidthForLow: ViewWidth = ViewWidth.NORMAL
 
   fun start() {
@@ -52,26 +52,26 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   }
 
   fun calculateMaxVisibleAngle(viewWidth: ViewWidth, viewQuality: ViewQuality): Double {
-    val viewAngel = getViewAngle(viewWidth)
-    val sightsCountForMaxAngle = getSightsCountForAngel(boundAngel, viewAngel)
+    val viewAngle = getViewAngle(viewWidth)
+    val sightsCountForMaxAngle = getSightsCountForAngle(boundAngle, viewAngle)
     val sensorFrequency = getViewFrequency(viewWidth, viewQuality) / TICK
-    val ticksForSeeMaxAngel = sightsCountForMaxAngle * sensorFrequency
+    val ticksForSeeMaxAngle = sightsCountForMaxAngle * sensorFrequency
     val sensorTickUntilAction = countSensorTickUntilAction(viewWidth, viewQuality)
-    maxVisibleAngle = if (ticksForSeeMaxAngel > sensorTickUntilAction) {
-      floor(sensorTickUntilAction / sensorFrequency) * viewAngel
+    maxVisibleAngle = if (ticksForSeeMaxAngle > sensorTickUntilAction) {
+      floor(sensorTickUntilAction / sensorFrequency) * viewAngle
     } else {
-      boundAngel * 2.0
+      boundAngle * 2.0
     }
     return maxVisibleAngle
   }
 
   fun calculateSensorTickWithoutMainObject(viewWidth: ViewWidth, viewQuality: ViewQuality): Int {
-    val viewAngel = getViewAngle(viewWidth)
+    val viewAngle = getViewAngle(viewWidth)
     sensorTickWithoutMainObject = 0
-    if (viewAngel < maxVisibleAngle) {
-      val angelWithoutMainObject = ceil((maxVisibleAngle - viewAngel) / viewAngel)
+    if (viewAngle < maxVisibleAngle) {
+      val angleWithoutMainObject = ceil((maxVisibleAngle - viewAngle) / viewAngle)
       val sensorFrequency = getViewFrequency(viewWidth, viewQuality) / TICK
-      sensorTickWithoutMainObject = (sensorFrequency * angelWithoutMainObject).toInt()
+      sensorTickWithoutMainObject = (sensorFrequency * angleWithoutMainObject).toInt()
       val sensorTickUntilAction = countSensorTickUntilAction(viewWidth, viewQuality)
       if (sensorTickWithoutMainObject > sensorTickUntilAction) {
         sensorTickWithoutMainObject = sensorTickUntilAction
@@ -80,24 +80,24 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     return sensorTickWithoutMainObject
   }
 
-  private fun getSightsCountForAngel(maxAngel: Double, viewAngel: Double) = ceil((maxAngel * 2) / viewAngel)
+  private fun getSightsCountForAngle(maxAngle: Double, viewAngle: Double) = ceil((maxAngle * 2) / viewAngle)
 
   fun estimateSensorTickWithoutMainObject(viewWidth: ViewWidth): Int {
     estimateSensorTickWithoutMainObject = 0
     if (sensorTickWithoutMainObject > 0) {
-      val viewAngel = getViewAngle(viewWidth)
-      estimateSensorTickWithoutMainObject = floor(maxVisibleAngle / viewAngel / 2).toInt() //2 is a magic coefficient for now
+      val viewAngle = getViewAngle(viewWidth)
+      estimateSensorTickWithoutMainObject = floor(maxVisibleAngle / viewAngle / 2).toInt() //2 is a magic coefficient for now
     }
     return estimateSensorTickWithoutMainObject
   }
 
-  private fun getNeckAngelAndIterationWMO(turnNeckOnce: Boolean, viewWidth: ViewWidth, neckAngel: Int, iterationWithoutMainObject: Int): Pair<Int, Int> {
-    var localNeckAngel = neckAngel
+  private fun getNeckAngleAndIterationWMO(turnNeckOnce: Boolean, viewWidth: ViewWidth, neckAngle: Int, iterationWithoutMainObject: Int): Pair<Int, Int> {
+    var localNeckAngle = neckAngle
     var localIterationWithoutMainObject = iterationWithoutMainObject
     if (!turnNeckOnce && estimateSensorTickWithoutMainObject > 0) {
-      if (!isObjectInAngel(viewWidth, angelService.getBodyObjectAngel(), localNeckAngel)) {
+      if (!isObjectInAngle(viewWidth, angleService.getBodyObjectAngle(), localNeckAngle)) {
         if (estimateSensorTickWithoutMainObject == localIterationWithoutMainObject) {
-          localNeckAngel = angelService.getBodyObjectAngel()
+          localNeckAngle = angleService.getBodyObjectAngle()
           localIterationWithoutMainObject = 0
         } else {
           ++localIterationWithoutMainObject
@@ -106,7 +106,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
         localIterationWithoutMainObject = 0
       }
     }
-    return Pair(localNeckAngel, localIterationWithoutMainObject)
+    return Pair(localNeckAngle, localIterationWithoutMainObject)
   }
 
   private fun getVisiblePlayers(serverMessage: String): List<VisiblePlayer> {
@@ -122,11 +122,11 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   }
 
   private fun initAnglesForLowQuality(viewAngle: Double = 90.0) {
-    angelsToView.clear()
-    var neckAngel = (-(maxVisibleAngle / 2) + (viewAngle / 2)).toInt()
-    while (neckAngel < (maxVisibleAngle / 2)) {
-      angelsToView.add(neckAngel)
-      neckAngel += viewAngle.toInt()
+    anglesToView.clear()
+    var neckAngle = (-(maxVisibleAngle / 2) + (viewAngle / 2)).toInt()
+    while (neckAngle < (maxVisibleAngle / 2)) {
+      anglesToView.add(neckAngle)
+      neckAngle += viewAngle.toInt()
     }
   }
 
@@ -143,38 +143,38 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     }
     changeView(viewWidth, viewQuality)
 
-    val turnNeckOnce = angelsToView.size == 1
+    val turnNeckOnce = anglesToView.size == 1
     if (turnNeckOnce) {
-      turnNeck(angelsToView[0])
+      turnNeck(anglesToView[0])
       afterGetInfo(isHigh)
     }
 
     val scheduleFrequency = getViewFrequency(viewWidth, viewQuality).toLong()
     var sensorTickCounter = 0
-    var angelsCounter = 0
-    var allAngelsChecked = false
+    var anglesCounter = 0
+    var allAnglesChecked = false
     var iterationWithoutMainObject = 0
     schedulerByView(0, viewWidth, viewQuality) { scheduler ->
-      var neckAngel = angelsToView[angelsCounter]
+      var neckAngle = anglesToView[anglesCounter]
 
-      val (angel, iteration) = getNeckAngelAndIterationWMO(turnNeckOnce, viewWidth, neckAngel, iterationWithoutMainObject)
+      val (angle, iteration) = getNeckAngleAndIterationWMO(turnNeckOnce, viewWidth, neckAngle, iterationWithoutMainObject)
       iterationWithoutMainObject = iteration
-      neckAngel = angel
+      neckAngle = angle
 
-      if (neckAngel != angelsToView[angelsCounter]) {
-        --angelsCounter
+      if (neckAngle != anglesToView[anglesCounter]) {
+        --anglesCounter
       }
 
-      turnNeckAndGetInfo(turnNeckOnce, neckAngel, scheduleFrequency, highQualityPlayersInfo)
+      turnNeckAndGetInfo(turnNeckOnce, neckAngle, scheduleFrequency, highQualityPlayersInfo)
 
-      if (allAngelsChecked || (!isHigh && sensorTickCounter == sensorTicksForGettingMinimalQualityInfo)) {
+      if (allAnglesChecked || (!isHigh && sensorTickCounter == sensorTicksForGettingMinimalQualityInfo)) {
         afterGetInfo(isHigh)
         scheduler.shutdown()
       }
 
-      angelsCounter = (angelsCounter + 1) % angelsToView.size
-      if (angelsCounter == 0) {
-        allAngelsChecked = true
+      anglesCounter = (anglesCounter + 1) % anglesToView.size
+      if (anglesCounter == 0) {
+        allAnglesChecked = true
       }
       ++sensorTickCounter
     }
@@ -191,13 +191,13 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     config.viewQuality = viewQuality
   }
 
-  private fun turnNeckAndGetInfo(turnNeckOnce: Boolean, angel: Int, scheduleFrequency: Long,
+  private fun turnNeckAndGetInfo(turnNeckOnce: Boolean, angle: Int, scheduleFrequency: Long,
                                  qualityMap: MutableMap<Int, List<VisiblePlayer>>): List<VisiblePlayer> {
     var vp: List<VisiblePlayer> = ArrayList()
     var isSee = false
     var message = ""
     if (!turnNeckOnce) {
-      message = getServerMessage(turnNeck(angel))
+      message = getServerMessage(turnNeck(angle))
       isSee = isMessageSee(message)
     }
 
@@ -214,14 +214,14 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     }
 
     if (vp.isNotEmpty()) {
-      qualityMap[angel] = vp
+      qualityMap[angle] = vp
     }
     return vp
   }
 
-  private fun isObjectInAngel(viewWidth: ViewWidth, objectBodyAngel: Int, direction: Int): Boolean {
-    val halfSeeAngel = getViewAngle(viewWidth) / 2
-    return objectBodyAngel > (halfSeeAngel - direction) && objectBodyAngel < (halfSeeAngel + direction)
+  private fun isObjectInAngle(viewWidth: ViewWidth, objectBodyAngle: Int, direction: Int): Boolean {
+    val halfSeeAngle = getViewAngle(viewWidth) / 2
+    return objectBodyAngle > (halfSeeAngle - direction) && objectBodyAngle < (halfSeeAngle + direction)
   }
 
   private fun afterGetInfo(isHigh: Boolean) {
@@ -243,26 +243,26 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
       return
     }
 
-    angelsToView.clear()
+    anglesToView.clear()
     var averageEstimate = 0.0
-    mapForEstimate.forEach { angel, visiblePlayers ->
-      averageEstimate = correctConfigWithEstimate(visiblePlayers, averageEstimate, angel)
+    mapForEstimate.forEach { angle, visiblePlayers ->
+      averageEstimate = correctConfigWithEstimate(visiblePlayers, averageEstimate, angle)
       if (!isHigh && averageEstimate > estimateBound) {
-        angelsToView.add(angel)
+        anglesToView.add(angle)
       }
     }
 
     getVisualInfo(!isHigh)
   }
 
-  private fun correctConfigWithEstimate(visiblePlayers: List<VisiblePlayer>, estimateIn: Double, angel: Int): Double {
+  private fun correctConfigWithEstimate(visiblePlayers: List<VisiblePlayer>, estimateIn: Double, angle: Int): Double {
     var estimate = estimateIn
     val averageEstimate = visiblePlayers.map { estimateSubSystem.forVisiblePlayer(it) }.average()
     if (averageEstimate > estimate) {
-      config.kickDirection = angel
+      config.kickDirection = angle
       estimate = averageEstimate
     }
-    println("Angel: $angel, Estimate: $averageEstimate")
+    println("Angle: $angle, Estimate: $averageEstimate")
     return estimate
   }
 
@@ -286,10 +286,10 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
   private fun log(viewWidth: ViewWidth, viewQuality: ViewQuality) {
     println(this)
     println("Frequency for $viewWidth $viewQuality: ${getViewFrequency(viewWidth, viewQuality)}")
-    println("Angel for $viewWidth: ${getViewAngle(viewWidth)}")
+    println("Angle for $viewWidth: ${getViewAngle(viewWidth)}")
   }
 
   override fun toString(): String {
-    return "VisualSensorAlgorithm(config=$config, estimateBound=$estimateBound, boundAngel=$boundAngel, maxVisibleAngle=$maxVisibleAngle, sensorTickWithoutMainObject=$sensorTickWithoutMainObject, sensorTicksForGettingMinimalQualityInfo=$sensorTicksForGettingMinimalQualityInfo, estimateSensorTickWithoutMainObject=$estimateSensorTickWithoutMainObject, lowQualityPlayersInfo=$lowQualityPlayersInfo, highQualityPlayersInfo=$highQualityPlayersInfo, angelsToView=$angelsToView, tickService=$tickService"
+    return "VisualSensorAlgorithm(config=$config, estimateBound=$estimateBound, boundAngle=$boundAngle, maxVisibleAngle=$maxVisibleAngle, sensorTickWithoutMainObject=$sensorTickWithoutMainObject, sensorTicksForGettingMinimalQualityInfo=$sensorTicksForGettingMinimalQualityInfo, estimateSensorTickWithoutMainObject=$estimateSensorTickWithoutMainObject, lowQualityPlayersInfo=$lowQualityPlayersInfo, highQualityPlayersInfo=$highQualityPlayersInfo, anglesToView=$anglesToView, tickService=$tickService"
   }
 }
