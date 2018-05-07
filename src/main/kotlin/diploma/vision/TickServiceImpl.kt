@@ -1,12 +1,13 @@
 package diploma.vision
 
+import diploma.constants.TICK_MAX
 import diploma.constants.server.TICK
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class TickServiceImpl : TickService {
-  private var tickUntilAction: AtomicInteger = AtomicInteger(8) //hardcoded for now
+  private var tickUntilAction: AtomicInteger = AtomicInteger(TICK_MAX - 3) //hardcoded for now
 
   override fun getUntilAction(): Int {
     return tickUntilAction.get()

@@ -1,8 +1,6 @@
 package diploma.teams.def
 
-import diploma.constants.LOW_DEFER
 import diploma.constants.SPY
-import diploma.constants.UP_DEFER
 import diploma.teams.Actors
 import diploma.teams.PlayerConfig
 
@@ -24,9 +22,9 @@ open class DefActors(private val teamName: String, private val configs: HashMap<
     if (actors.isNotEmpty()) {
       actors.clear()
     }
-    actors.add(Thread(upperDef(configs[UP_DEFER]!!), UP_DEFER))
+//    actors.add(Thread(upperDef(configs[UP_DEFER]!!), UP_DEFER))
     actors.add(Thread(spyDef(configs[SPY]!!), SPY))
-    actors.add(Thread(lowerDef(configs[LOW_DEFER]!!), LOW_DEFER))
+//    actors.add(Thread(lowerDef(configs[LOW_DEFER]!!), LOW_DEFER))
     return actors
   }
 }

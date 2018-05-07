@@ -35,6 +35,10 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
 
   fun start() {
     tickService.startTick()
+    initView()
+  }
+
+  fun initView() {
     calculateMaxVisibleAngle(currentViewWidthForLow, ViewQuality.LOW)
     calculateSensorTicksForGetMinimalQualityInfo()
     calculateSensorTickWithoutMainObject(currentViewWidthForLow, ViewQuality.LOW)
@@ -226,7 +230,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
           ViewWidth.NORMAL -> ViewWidth.NARROW
           ViewWidth.NARROW -> ViewWidth.NORMAL
         }
-        start()
+        initView()
       } else {
         getVisualInfo(false)
       }
