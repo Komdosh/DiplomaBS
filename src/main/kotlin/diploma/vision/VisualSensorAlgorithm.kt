@@ -144,10 +144,6 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     changeView(viewWidth, viewQuality)
 
     val turnNeckOnce = anglesToView.size == 1
-    if (turnNeckOnce) {
-      turnNeck(anglesToView[0])
-      afterGetInfo(isHigh)
-    }
 
     val scheduleFrequency = getViewFrequency(viewWidth, viewQuality).toLong()
     var sensorTickCounter = 0
@@ -165,7 +161,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
         --anglesCounter
       }
 
-      turnNeckAndGetInfo(turnNeckOnce, neckAngle, scheduleFrequency, highQualityPlayersInfo)
+      turnNeckAndGetInfo(neckAngle, scheduleFrequency, highQualityPlayersInfo)
 
       if (allAnglesChecked || (!isHigh && sensorTickCounter == sensorTicksForGettingMinimalQualityInfo)) {
         afterGetInfo(isHigh)
@@ -191,20 +187,15 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
     config.viewQuality = viewQuality
   }
 
-  private fun turnNeckAndGetInfo(turnNeckOnce: Boolean, angle: Int, scheduleFrequency: Long,
-                                 qualityMap: MutableMap<Int, List<VisiblePlayer>>): List<VisiblePlayer> {
+  private fun turnNeckAndGetInfo(angle: Int, scheduleFrequency: Long, qualityMap: MutableMap<Int, List<VisiblePlayer>>):
+      List<VisiblePlayer> {
     var vp: List<VisiblePlayer> = ArrayList()
-    var isSee = false
-    var message = ""
-    if (!turnNeckOnce) {
-      message = getServerMessage(turnNeck(angle))
-      isSee = isMessageSee(message)
-    }
 
-    if ((isSee && vp.isEmpty()) || turnNeckOnce) {
-      if (!turnNeckOnce) {
-        Thread.sleep(scheduleFrequency)
-      }
+    var message = getServerMessage(turnNeck(angle))
+    var isSee = isMessageSee(message)
+
+    if ((isSee && vp.isEmpty())) {
+      Thread.sleep(scheduleFrequency)
       message = getServerMessage(actorControl.receive())
       isSee = isMessageSee(message)
     }
