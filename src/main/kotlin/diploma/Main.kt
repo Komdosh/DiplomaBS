@@ -7,7 +7,7 @@ import diploma.constants.server.TICK
 import diploma.teams.Actors
 import diploma.teams.attack.Attack
 import diploma.teams.def.Def
-import teams.Trainings.Trainer
+import diploma.teams.trainings.Trainer
 import java.lang.System.exit
 
 const val simulationRepeat: Int = 0

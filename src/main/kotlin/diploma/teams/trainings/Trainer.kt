@@ -1,4 +1,4 @@
-package teams.Trainings
+package diploma.teams.trainings
 
 import diploma.constants.server.SERVER_STOP_TIMEOUT
 import diploma.control.initTrainer
