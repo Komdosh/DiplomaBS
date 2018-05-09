@@ -13,7 +13,7 @@ class TickServiceImpl : TickService {
     return tickUntilAction.get()
   }
 
-  override fun serverTicked(): Int {
+  private fun serverTicked(): Int {
     return tickUntilAction.decrementAndGet()
   }
 
