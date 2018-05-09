@@ -19,8 +19,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
 
   private val estimateBound = 10
   private val boundAngle: Double = 90.0
-
-
+  
   private var maxVisibleAngle: Double = 0.0
   private var sensorTickWithoutMainObject: Int = 0
   private var sensorTicksForGettingMinimalQualityInfo: Int = 0
@@ -165,7 +164,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
         --anglesCounter
       }
 
-      turnNeckAndGetInfo(neckAngle, scheduleFrequency, highQualityPlayersInfo)
+      turnNeckAndGetInfo(neckAngle, scheduleFrequency, if (isHigh) highQualityPlayersInfo else lowQualityPlayersInfo)
 
       if (allAnglesChecked || (!isHigh && sensorTickCounter == sensorTicksForGettingMinimalQualityInfo)) {
         afterGetInfo(isHigh)
@@ -221,7 +220,7 @@ class VisualSensorAlgorithm(private val config: PlayerConfig, private val actorC
 
   private fun afterGetInfo(isHigh: Boolean) {
     println(if (isHigh) highQualityPlayersInfo else lowQualityPlayersInfo)
-    val mapForEstimate = if (isHigh) lowQualityPlayersInfo else highQualityPlayersInfo
+    val mapForEstimate = if (isHigh) highQualityPlayersInfo else lowQualityPlayersInfo
 
     if (mapForEstimate.isEmpty()) {
       if (!isHigh) {
