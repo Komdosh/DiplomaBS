@@ -7,7 +7,7 @@ import diploma.control.initPayer
 import diploma.teams.Actors
 import diploma.teams.PlayerConfig
 
-open class AttackActors(private val teamName: String, private val configs: HashMap<String, PlayerConfig>) : Actors() {
+open class AttackActors(private val teamName: String, private val configs: Map<String, PlayerConfig>) : Actors() {
   private fun kicker(config: PlayerConfig): Runnable {
     val kicker = Kicker(config)
     return initPayer(teamName, kicker.getAlgorithm())
@@ -25,9 +25,9 @@ open class AttackActors(private val teamName: String, private val configs: HashM
     if (actors.isNotEmpty()) {
       actors.clear()
     }
-    actors.add(Thread(kicker(configs[KICKER]!!), KICKER))
-    actors.add(Thread(upperAttacker(configs[UP_ATTACKER]!!), UP_ATTACKER))
-    actors.add(Thread(lowerAttacker(configs[LOW_ATTACKER]!!), LOW_ATTACKER))
+    actors.add(Thread(kicker(configs[KICKER] ?: error("NO KICKER")), KICKER))
+    actors.add(Thread(upperAttacker(configs[UP_ATTACKER] ?: error("NO UPPER ATTACKER")), UP_ATTACKER))
+    actors.add(Thread(lowerAttacker(configs[LOW_ATTACKER] ?: error("NO LOW ATTACKER")), LOW_ATTACKER))
 
     return actors
   }

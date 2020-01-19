@@ -9,11 +9,12 @@ import diploma.teams.attack.Attack
 import diploma.teams.def.Def
 import diploma.teams.trainings.Trainer
 import java.lang.System.exit
+import kotlin.system.exitProcess
 
 const val simulationRepeat: Int = 0
 
 
-fun main(args: Array<String>) {
+fun main() {
 
   val def = Def()
   val attack = Attack()
@@ -22,41 +23,41 @@ fun main(args: Array<String>) {
   for (i in 0..simulationRepeat) {
     runServer(Runnable { runActors(attack, def, trainer) })
 
-    val turnNeckMoment = attack.configs[KICKER]!!.turnNeck
-    val kickDirection = attack.configs[KICKER]!!.kickDirection
+    val turnNeckMoment = attack.configs[KICKER]?.turnNeck ?: error("No turn neck for kicker")
+    val kickDirection = attack.configs[KICKER]?.kickDirection ?: error("No turn neck for kicker")
     println("turn neck moment: $turnNeckMoment | kick direction: $kickDirection")
     println("-----------------------------------------")
   }
 
-  exit(0)
+  exitProcess(0)
 }
 
 private fun runServer(runOnServer: Runnable) {
-  ProcessBuilder(
+/*  ProcessBuilder(
       "gnome-terminal",
       "-e",
       "rcsoccersim").start()
 
-  Thread.sleep(SERVER_START_TIMEOUT)
+  Thread.sleep(SERVER_START_TIMEOUT)*/
 
   runOnServer.run()
 
-  Thread.sleep(SERVER_STOP_TIMEOUT)
+/*  Thread.sleep(SERVER_STOP_TIMEOUT)
 
   ProcessBuilder(
       "gnome-terminal",
       "-e",
       "killall rcsoccersim").start()
 
-  Thread.sleep(TICK.toLong())
+  Thread.sleep(TICK.toLong())*/
 }
 
 private fun runActors(attack: Actors, def: Actors, trainer: Trainer) {
-  attack.getActorThreads().forEach({ it.start() })
+  attack.getActorThreads().forEach { it.start() }
 
   Thread.sleep(TICK.toLong())
 
-  def.getActorThreads().forEach({ it.start() })
+  def.getActorThreads().forEach { it.start() }
 
   Thread(trainer.init()).start()
 }

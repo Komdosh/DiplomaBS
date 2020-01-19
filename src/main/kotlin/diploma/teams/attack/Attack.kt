@@ -6,7 +6,7 @@ import diploma.constants.UP_ATTACKER
 import diploma.teams.PlayerConfig
 
 class Attack(teamName: String = "Attack",
-             val configs: HashMap<String, PlayerConfig>
+             val configs: Map<String, PlayerConfig>
              = hashMapOf(
                  Pair(KICKER, PlayerConfig(-13, 0, 0, 20, 0, 90)),
                  Pair(UP_ATTACKER, PlayerConfig(4, -3)), // 4 -3
